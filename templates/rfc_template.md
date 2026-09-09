@@ -13,7 +13,7 @@ párrafo corto que explica qué estas proponiendo
 
 <!--
 ¿qué motiva esta decisión y por qué es importante?
-el propósito de esta sección es articular de una manera sencilla el valor de la decision que vamos a tomar
+el propósito de esta siygguiuhuhección es articular de una manera sencilla el valor de la decision que vamos a tomar
 -->
 
 ## 3 Propuesta de implementación
