@@ -15,10 +15,9 @@ párrafo corto que explica qué estas proponiendo
 
 ## 2 Motivación
 
-<!--
-¿qué motiva esta decisión y por qué es importante?
-el propósito de esta sección es articular de una manera sencilla el valor de la decision que vamos a tomar
--->
+La motivación de este proyecto surge de la necesidad de mejorar la gestión de la atención en los servicios de urgencias, donde intervienen múltiples actores, procesos y decisiones que deben coordinarse de manera eficiente. Una adecuada gestión de la información puede ayudar a reducir retrasos, errores y dificultades en el seguimiento de los pacientes.
+
+Desde la Ingeniería de Software, este contexto representa un reto interesante, ya que requiere comprender las necesidades de cada rol, definir permisos, gestionar prioridades, estados y diferentes escenarios de atención. Por ello, más que desarrollar una aplicación, buscamos analizar un problema real y diseñar una solución que facilite la coordinación entre los diferentes actores, optimice el manejo de la información y apoye la toma de decisiones durante la atención de los pacientes.
 
 ## 3 Propuesta de implementación
 
