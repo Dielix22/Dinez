@@ -11,7 +11,7 @@ Autores:
 
 <!--
 párrafo corto que explica qué estas proponiendo
--->Sistema web para la gestión y coordinación de la atención en urgencias hospitalarias.
+-->Sistema web para la gestión y coordinación de la atención en urgencias hospitalarias
 
 ## 2 Motivación
 
