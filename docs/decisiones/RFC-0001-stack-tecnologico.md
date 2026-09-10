@@ -38,7 +38,7 @@ La aplicación se organizará como un monolito. El backend será responsable de 
 | **MySQL** | Código abierto; ampliamente utilizado; documentación y comunidad extensas; instalación y administración conocidas por muchos desarrolladores; buen rendimiento para aplicaciones relacionales comunes. | Algunas decisiones históricas de compatibilidad y configuración pueden generar diferencias frente al estándar SQL; ciertas capacidades avanzadas pueden ser menos adecuadas para reglas complejas; también requiere un servidor separado en su configuración habitual. |
 | **Oracle** | Plataforma madura; capacidades empresariales avanzadas; herramientas robustas de administración; buen soporte para alta disponibilidad y grandes volúmenes de datos. | Licenciamiento y operación más costosos; mayor complejidad para un proyecto académico; menor adecuación al tamaño actual del proyecto; puede aumentar la dependencia de herramientas específicas. |
 
-**Elección:** PostgreSQL, por su madurez, sus capacidades relacionales y su equilibrio entre potencia, apertura y costo. Antes de la implementación deberá definirse cómo se resolverá la exigencia de iniciar la aplicación sin configurar un servidor de base de datos por separado.
+**Elección:** PostgreSQL, por su madurez, sus capacidades relacionales y su equilibrio entre potencia, apertura y costo.
 
 ### 3.2 Backend
 
@@ -66,14 +66,13 @@ La aplicación se organizará como un monolito. El backend será responsable de 
 
 ## 5. Riesgos e inconvenientes
 
-- PostgreSQL normalmente requiere un servidor independiente, lo que puede entrar en conflicto con la exigencia de ejecutar la aplicación con un único comando y utilizar una base de datos embebida.
 - El uso de tres tecnologías principales aumenta la necesidad de definir contratos claros entre frontend y backend.
 - Spring Boot y React ofrecen muchas opciones, y una configuración sin convenciones puede producir inconsistencias entre módulos.
 - La experiencia desigual del equipo puede concentrar el conocimiento en pocos integrantes.
 - El tiempo de aprendizaje de Java, Spring Boot y React puede reducir el tiempo disponible para validar las reglas de negocio.
 - La evolución de dependencias puede introducir incompatibilidades si no se fijan versiones y se automatizan las pruebas.
 
-Para mitigar estos riesgos, se documentará el proceso de ejecución, se definirán convenciones de código, se crearán pruebas automatizadas desde el primer incremento y se revisará la compatibilidad de PostgreSQL con las restricciones de despliegue antes de cerrar la implementación.
+Para mitigar estos riesgos, se documentará el proceso de ejecución, se definirán convenciones de código, se crearán pruebas automatizadas desde el primer incremento.
 
 ## 6. Alternativas
 
@@ -90,5 +89,3 @@ Visto antes
 ## 9. Conclusión
 
 Se propone adoptar PostgreSQL, Java con Spring Boot y React para desarrollar **Adres en Urgencias**. La selección prioriza tecnologías maduras, documentadas y con posibilidades de aprendizaje y crecimiento para el equipo.
-
-La decisión queda condicionada a resolver la compatibilidad de PostgreSQL con el requisito de ejecución reproducible y base de datos embebida. Una vez aclarado ese punto, el equipo podrá fijar las versiones, documentar la configuración y comenzar la implementación de la primera funcionalidad vertical.
