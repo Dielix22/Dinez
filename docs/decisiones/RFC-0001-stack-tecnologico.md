@@ -5,6 +5,7 @@ Autores:
 - @elDIEGO12
 - @Dielix22
 - @hoverwars
+- @sereypretel
 
 Fecha: 2026-09-09
 
