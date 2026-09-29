@@ -1,4 +1,4 @@
-# Requisitos funcionales
+# RF
 
 ## RF-01 — Registro de llegada del paciente
 
