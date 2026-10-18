@@ -36,10 +36,8 @@ Este diseño es necesario porque implementa la cola de priorizacion de los pacie
 | Requirement Use Case ID | Why it shapes the structure                                                                                                                           | Quality attribute, constraint or business rule involved |
 |---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------|
 | REQ-04                    | Introduce la nocion de turno y de fila de priorizacion                                                                                                | BR-TRG-02, BR-TRG-03                                    |
-| REQ-05                    | El sistema debe calcular un tiempo de espera preciso al momento de asignacion del turno al paciente. Este tiempo deberia ser mas o menos 15 minutos de lo que realmente va a esperar el paciente |   
-| REQ-06                    | El sistema puede priorizar a un paciente que necesita atencion, y de facto, cambiar el turno de los pacientes que fueron antiguamente adelante del paciente prioritario |   
-| REQ-12                    | Es posible editar el tiempo de espera para cada nivel de triage, excluyendo el nivel 1 que necesita una atencion inmediata |                                                         |
-| REQ-13                    | Introduce la idea que un paciente no puede esperar mas del tiempo configurado por su nivel de triage. Por eso, el sistema puede priorizar a pacientes |                                                         |
+| REQ-10                    | Es posible editar el tiempo de espera para cada nivel de triage, excluyendo el nivel 1 que necesita una atencion inmediata |                                                         |
+| REQ-11                    | Introduce la idea que un paciente no puede esperar mas del tiempo configurado por su nivel de triage. Por eso, el sistema puede priorizar a pacientes |                                                         |
 ---
 
 ## 2. Architectural Design
@@ -88,9 +86,9 @@ flowchart LR
 | Component                        | Main responsibility                                                                                                             | Requirements / use cases supported | Provided capabilities                                                                                | Required capabilities                            | Main dependencies                |
 |----------------------------------|---------------------------------------------------------------------------------------------------------------------------------|------------------------------------|------------------------------------------------------------------------------------------------------|--------------------------------------------------|----------------------------------|
 | Asignador de turno               | Con el resultado de Triage, pone el paciente en la cola y se le asigna un turno. <br> Actualizar un paciente de nivel de Triage | REQ-04                             | Asignar un turno, <br> Actualizar un nivel de Triage                                                 | Anadir a un paciente <br> Actualizar un paciente | Gestionador de cola de prioridad |
-| Gestionador de tiempo de espera  | Ver el tiempo limite de espera para un nivel de Triage, configurar un tiempo limite de espera para un nivel de Triage           | REQ-12                             | Ver un tiempo limite de espera <br> Cambiar un tiempo limite de espera                               |                                                  |                                  |
-| Gestionador de cola de prioridad | Anadir a un paciente en la cola, listar los pacientes en la cola, quitar a un paciente, insertar a un paciente                  | REQ-04, REQ-06, REQ-13             | Anadir un paciente <br> Actualizar un paciente <br>  Quitar a un paciente <br> Ver la lista ordenada | Ver un tiempo limite de espera                   | Gestionador de tiempo de espera  |
-| Visualizacion de cola            | Mostrar el estado de la cola de prioridad en tiempo real                                                                        | REQ-08                             | Mostrar la cola de prioridad sobre la pantalla de usuario                                            | Ver la lista ordenada                            | Gestionador de cola de prioridad |
+| Gestionador de tiempo de espera  | Ver el tiempo limite de espera para un nivel de Triage, configurar un tiempo limite de espera para un nivel de Triage           | REQ-10                             | Ver un tiempo limite de espera <br> Cambiar un tiempo limite de espera                               |                                                  |                                  |
+| Gestionador de cola de prioridad | Anadir a un paciente en la cola, listar los pacientes en la cola, quitar a un paciente, insertar a un paciente                  | REQ-04, REQ-11             | Anadir un paciente <br> Actualizar un paciente <br>  Quitar a un paciente <br> Ver la lista ordenada | Ver un tiempo limite de espera                   | Gestionador de tiempo de espera  |
+| Visualizacion de cola            | Mostrar el estado de la cola de prioridad en tiempo real                                                                        | REQ-06                             | Mostrar la cola de prioridad sobre la pantalla de usuario                                            | Ver la lista ordenada                            | Gestionador de cola de prioridad |
 | | | | | | |
 
 
@@ -105,8 +103,8 @@ flowchart LR
 | Componente | Por qué fue seleccionado (riesgo, complejidad, centralidad respecto a los drivers) |
 |---|---|
 | Asignador de turno | Es el punto de entrada del sistema: recibe el resultado de Triage y es el único que decide cuándo se crea o se reasigna un turno (REQ-04). |
-| Gestionador de cola de prioridad | Es el componente más central y complejo: concentra la lógica de ordenamiento (REQ-04), la priorización de pacientes (REQ-06) y el respeto del tiempo máximo de espera (REQ-13). |
-| Gestionador de tiempo de espera | Es el origen de los límites de espera por nivel de Triage (REQ-12); la cola de prioridad depende de él para aplicar REQ-13. |
+| Gestionador de cola de prioridad | Es el componente más central y complejo: concentra la lógica de ordenamiento (REQ-04) y el respeto del tiempo máximo de espera (REQ-11). |
+| Gestionador de tiempo de espera | Es el origen de los límites de espera por nivel de Triage (REQ-10); la cola de prioridad depende de él para aplicar REQ-11. |
 
 *El componente "Visualización de cola" queda fuera del alcance de este diseño detallado.*
 
@@ -181,7 +179,7 @@ classDiagram
     GestionadorTiempoEspera ..> NivelTriage
 ```
 
-*Propuesta inicial, a iterar. Decisiones de base: (1) cuatro colas FIFO, una por nivel de Triage (niveles 2 a 5); (2) `siguientePaciente()` recorre las colas del nivel 2 al nivel 5, pero prioriza antes a un turno que haya excedido su límite de espera (REQ-13); (3) `actualizarPaciente` retira el turno de su cola actual y lo reubica en la del nuevo nivel (REQ-06).*
+*Propuesta inicial, a iterar. Decisiones de base: (1) cuatro colas FIFO, una por nivel de Triage (niveles 2 a 5); (2) `siguientePaciente()` recorre las colas del nivel 2 al nivel 5, pero prioriza antes a un turno que haya excedido su límite de espera (REQ-11); (3) `actualizarPaciente` retira el turno de su cola actual y lo reubica en la del nuevo nivel.*
 
 ### 3.3 Class Responsibilities
 
@@ -222,7 +220,7 @@ Camino no feliz (paciente duplicado):
 
 | Question | Your answer, with evidence from your design |
 |---|---|
-| **Cohesión:** ¿las responsabilidades dentro de cada clase o componente van juntas? | Cada clase tiene una sola razón de cambio. `ColaPorNivel` solo mantiene el orden de llegada de un nivel; `GestionadorColaPrioridad` decide el orden global entre niveles (recorrido de nivel 2 a 5 y prioridad por límite excedido, REQ-13); `GestionadorTiempoEspera` solo guarda y consulta límites (REQ-12); `AsignadorDeTurno` solo crea el turno y su número. Punto más débil: `GestionadorColaPrioridad` agrupa añadir, actualizar, quitar, listar y elegir al siguiente; sigue coherente porque todas operan sobre el mismo conjunto de colas, pero es la clase más propensa a crecer. |
+| **Cohesión:** ¿las responsabilidades dentro de cada clase o componente van juntas? | Cada clase tiene una sola razón de cambio. `ColaPorNivel` solo mantiene el orden de llegada de un nivel; `GestionadorColaPrioridad` decide el orden global entre niveles (recorrido de nivel 2 a 5 y prioridad por límite excedido, REQ-11); `GestionadorTiempoEspera` solo guarda y consulta límites (REQ-10); `AsignadorDeTurno` solo crea el turno y su número. Punto más débil: `GestionadorColaPrioridad` agrupa añadir, actualizar, quitar, listar y elegir al siguiente; sigue coherente porque todas operan sobre el mismo conjunto de colas, pero es la clase más propensa a crecer. |
 | **Acoplamiento:** ¿hasta dónde se propaga un cambio en un elemento? ¿Dónde están las dependencias más fuertes? | Las dependencias entre componentes son unidireccionales y coinciden con la tabla de la sección 2.2: `AsignadorDeTurno` → `GestionadorColaPrioridad` → `GestionadorTiempoEspera`; no hay ciclos. La dependencia más fuerte es `NivelTriage`, usado por las cinco clases: añadir o quitar un nivel afecta el enum, `contadores`, `colas` y `limites`. `Turno` también es compartido entre el Asignador (que lo crea) y la cola (que lo almacena y lo reordena). |
 | **Ocultamiento de información:** ¿qué se mantuvo privado o interno y por qué? | Los atributos son privados en todas las clases: ninguna clase interactúa directamente con las variables internas de otra, solo con sus operaciones públicas. Los `contadores` y `generarNumeroTurno` quedan dentro de `AsignadorDeTurno`, de modo que el formato del número de turno puede cambiar (ver Q1 de REQ-04) sin afectar a otros componentes y nadie más puede modificarlo (CON-TRG-02). Las `ColaPorNivel` solo son accesibles a través de `GestionadorColaPrioridad`: los demás componentes no saben que existe una cola por nivel ni cómo se recorren. `Deque` y `Map` no aparecen en ninguna operación pública. |
 
@@ -239,19 +237,19 @@ Two decisions are required: one architectural (Class 11 level) and one detailed-
 
 | | |
 |---|---|
-| **Contexto** (requisito, restricción o problema que lo motivó) | REQ-12 exige que el tiempo límite de espera de cada nivel de Triage sea editable, y REQ-13 exige que la cola respete ese límite. Si los límites vivieran dentro de la cola, cambiar una configuración implicaría tocar la lógica de ordenamiento. |
+| **Contexto** (requisito, restricción o problema que lo motivó) | REQ-10 exige que el tiempo límite de espera de cada nivel de Triage sea editable, y REQ-11 exige que la cola respete ese límite. Si los límites vivieran dentro de la cola, cambiar una configuración implicaría tocar la lógica de ordenamiento. |
 | **Decisión** | Aislar los límites de espera en un componente propio, *Gestionador de tiempo de espera*, que solo ofrece "ver" y "cambiar" un límite. *Gestionador de cola de prioridad* lo consulta (dependencia unidireccional) y no lo modifica. |
-| **Justificación** (por qué es razonable aquí) | REQ-12 y REQ-13 tienen orígenes distintos: uno es de configuración, el otro de ordenamiento. Con la separación, la cola solo necesita la capacidad "ver un tiempo límite de espera para cada nivel de Triage", y la pantalla de configuración (REQ-12) puede evolucionar sin tocar la cola. |
+| **Justificación** (por qué es razonable aquí) | REQ-10 y REQ-11 tienen orígenes distintos: uno es de configuración, el otro de ordenamiento. Con la separación, la cola solo necesita la capacidad "ver un tiempo límite de espera para cada nivel de Triage", y la pantalla de configuración (REQ-10) puede evolucionar sin tocar la cola. |
 | **Compromiso aceptado** | Un componente adicional y una consulta entre componentes cada vez que la cola decide quién es el siguiente paciente. Con solo cuatro niveles el costo es bajo, pero hay que mantener la interfaz entre ambos. |
 
 ### Decision B — Detailed design
 
 | | |
 |---|---|
-| **Contexto** | Según la sección 1, REQ-04 introduce el turno y la fila de priorización, REQ-06 permite priorizar a un paciente y cambiar el turno de quienes estaban delante, y REQ-13 impone un tiempo máximo de espera por nivel de Triage. La estructura de la fila debe permitir ordenar por nivel, reubicar pacientes y detectar a quien excedió su límite. |
+| **Contexto** | Según la sección 1, REQ-04 introduce el turno y la fila de priorización, y REQ-11 impone un tiempo máximo de espera por nivel de Triage. La estructura de la fila debe permitir ordenar por nivel, reubicar pacientes y detectar a quien excedió su límite. |
 | **Decisión** | Representar la cola como una `ColaPorNivel` por cada nivel de Triage, administradas por `GestionadorColaPrioridad`, en lugar de una única lista ordenada por un comparador. `siguientePaciente()` recorre los niveles en orden y prioriza antes a un turno que excedió su límite. |
-| **Justificación** | Dentro de un mismo nivel, el orden de llegada se cumple por construcción: encolar al final de la cola del nivel basta. Reubicar por cambio de nivel (REQ-06) es retirar de una cola y encolar en otra, sin reordenar toda la lista. El primer turno de cada cola es el más antiguo del nivel, así que verificar REQ-13 solo requiere revisar cuatro turnos. |
-| **Compromiso aceptado** | Se necesita lógica adicional para fusionar las colas al listar (`verListaOrdenada`) y para aplicar la excepción de REQ-13, y hay más objetos que una sola lista. Además, `GestionadorColaPrioridad` conoce la existencia de varios niveles, lo que la acopla a `NivelTriage`. |
+| **Justificación** | Dentro de un mismo nivel, el orden de llegada se cumple por construcción: encolar al final de la cola del nivel basta. Reubicar por cambio de nivel es retirar de una cola y encolar en otra, sin reordenar toda la lista. El primer turno de cada cola es el más antiguo del nivel, así que verificar REQ-11 solo requiere revisar cuatro turnos. |
+| **Compromiso aceptado** | Se necesita lógica adicional para fusionar las colas al listar (`verListaOrdenada`) y para aplicar la excepción de REQ-11, y hay más objetos que una sola lista. Además, `GestionadorColaPrioridad` conoce la existencia de varios niveles, lo que la acopla a `NivelTriage`. |
 
 ### ADR
 
@@ -264,10 +262,8 @@ Two decisions are required: one architectural (Class 11 level) and one detailed-
 | Requirement ID | Caso de uso | Componente(s) | Clase(s) |
 |---|---|---|---|
 | REQ-04 | Asignar un turno según el resultado de Triage | Asignador de turno, Gestionador de cola de prioridad | AsignadorDeTurno, Turno, GestionadorColaPrioridad, ColaPorNivel, NivelTriage |
-| REQ-05 | Calcular el tiempo de espera estimado al asignar el turno | *Sin componente asignado en la sección 2.2 (pendiente)* | — |
-| REQ-06 | Priorizar a un paciente y reubicar a los demás | Asignador de turno, Gestionador de cola de prioridad | AsignadorDeTurno, GestionadorColaPrioridad, ColaPorNivel, Turno |
-| REQ-12 | Editar el tiempo límite de espera de un nivel de Triage | Gestionador de tiempo de espera | GestionadorTiempoEspera, NivelTriage |
-| REQ-13 | Priorizar a un paciente que excedió el límite de espera | Gestionador de cola de prioridad, Gestionador de tiempo de espera | GestionadorColaPrioridad, ColaPorNivel, Turno, GestionadorTiempoEspera |
+| REQ-10 | Editar el tiempo límite de espera de un nivel de Triage | Gestionador de tiempo de espera | GestionadorTiempoEspera, NivelTriage |
+| REQ-11 | Priorizar a un paciente que excedió el límite de espera | Gestionador de cola de prioridad, Gestionador de tiempo de espera | GestionadorColaPrioridad, ColaPorNivel, Turno, GestionadorTiempoEspera |
 
 *(Every requirement in Section 1 must appear. Every component and class should appear at least once. If an element traces to nothing, ask why it exists.)*
 
