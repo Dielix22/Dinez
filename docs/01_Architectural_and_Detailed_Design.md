@@ -16,7 +16,7 @@ HOW TO USE THIS TEMPLATE
 7. Read Design_Deliverable_1_Example.md for the expected level of detail. Do not copy it.
 -->
 
-# [Project Name] — Architectural & Detailed Design v1.0
+# Adres en Urgencias — Architectural & Detailed Design v1.0
 
 | **Team**    | Grupo 3                                                                                                                                                                                       |
 |-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -162,7 +162,7 @@ classDiagram
         }
 
         class NivelTriage {
-            <<enumeration>>
+            ENUMERATION
             NIVEL_2
             NIVEL_3
             NIVEL_4
