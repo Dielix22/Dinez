@@ -57,6 +57,8 @@
 * **Preguntas Abiertas (Open Questions):**  
   * `Q1`: Como representar un numero de turno valido en nuestra sistema ? Ahora proponemos un numero de la forma `T3-045` donde `T3` seria el nivel de Triage y `045` significa que este paciente es el paciente numero 45 hoy; Los numeros se reinician cada dia, a medianoche.
 
+  * `Q2`: Que sucede si el paciente abandona su turno ?
+
 ---
 
 ## 3. Prioridad y Estimación (Priority & Estimation)
