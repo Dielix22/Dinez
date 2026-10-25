@@ -3,6 +3,7 @@
 ## Modificaciones desde la version 1
 
 - Cambiar el nombre del requerimiento 11 para que sea mas claro
+- Cambiar el nombre del requerimiento 5 para que sea mas claro
 - Cambiar REQ-07 y REQ-09 ("puede" -> "debe")
 
 ## Requisitos funcionales
@@ -15,6 +16,7 @@
 | RF-03   | El sistema debe clasificar a un paciente registrado en categorías I a V con criterios configurables, que dependen de la gravidad de sus heridas.                                                                                                                        |
 | RF-04   | Usando el resultado del triage, el sistema debe asignar un numero de turno para el paciente                                                                                                                                                                             |
 | RF-05   | Cuando una actualizacion de turno succede para un paciente, el sistema debe calcular el nuevo tiempo de espera que debe ser tan preciso que la primera estimacion. El sistema debe indicar claramente al paciente que una persona necesitaba una atencion prioritaria   |
+| RF-05   | Si la situacion del paciente se deterioria, el sistema debe actualizar el nivel de triage de este paciente y actualizar la cola de priorizacion de los pacientes   |
 | RF-06   | Mostrar al paciente o acompañante la categoria, el area de tratamiento y el tiempo estimado de espera.                                                                                                                                                                  |
 | RF-07   | El sistema debe cancelar un turno si un paciente ahora no lo necesita. De facto, el sistema actualiza los turnos y la estimacion de espera para los otros pacientes                                                                                                    |
 | RF-08   | El sistema debe quedar una traza del estado de un paciente durante el ciclo de atencion: ingreso, triage, esperando, consulta y egreso. Ademas, el sistema actualiza este estado cuando el paciente cambia de situacion                                                 |
