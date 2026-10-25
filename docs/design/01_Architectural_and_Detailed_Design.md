@@ -37,7 +37,7 @@ Este diseño es necesario porque implementa la cola de priorizacion de los pacie
 |---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------|
 | REQ-04                    | Introduce la nocion de turno y de fila de priorizacion                                                                                                | BR-TRG-02, BR-TRG-03                                    |
 | REQ-10                    | Es posible editar el tiempo de espera para cada nivel de triage, excluyendo el nivel 1 que necesita una atencion inmediata |                                                         |
-| REQ-11                    | Introduce la idea que un paciente no puede esperar mas del tiempo configurado por su nivel de triage. Por eso, el sistema puede priorizar a pacientes |                                                         |
+| REQ-11                    | El sistema debe quitar el paciente mas priorizado de la cola para darle atencion medica |                                                         |
 ---
 
 ## 2. Architectural Design
