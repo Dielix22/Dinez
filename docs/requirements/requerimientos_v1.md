@@ -15,7 +15,7 @@
 | RF-08   | El sistema debe quedar una traza del estado de un paciente durante el ciclo de atencion: ingreso, triage, esperando, consulta y egreso. Ademas, el sistema actualiza este estado cuando el paciente cambia de situacion                                                 |
 | RF-09   | El sistema puede registrar pacientes que no tienen documentos de identificacion al momento del ingreso.                                                                                                                                                                 |
 | RF-10   | El sistema permite configurar el tiempo de espera maximo para cada nivel de triage (Excluyendo el nivel 1 donde debe ser una atencion inmediata)                                                                                                                        |
-| RF-11   | El sistema puede priorizar un paciente que tiene un tiempo de espera que supera el limite configurado por su nivel de triage.                                                                                                                                           |
+| RF-11   | El sistema puede priorizar un paciente que tiene un tiempo de espera que supera el limite configurado por su nivel de triage.                                                                                                                                         |
 
 ## Requisitos no funcionales
 

@@ -1,20 +1,7 @@
-<!--
-HOW TO USE THIS TEMPLATE
-------------------------
-1. Copy this file to docs/design/01_Architectural_and_Detailed_Design.md in your team repository.
-2. This is v1.0 of work you already started: your Class 11 "Architectural Hypothesis v0.1"
-   and your Class 12 "Detailed Design v0.1". Extend them to your whole system. Do not restart.
-3. Use YOUR project. Generic examples (e-commerce, food delivery, banking, library) are
-   only reference material and cannot be submitted as project artifacts.
-4. Fill in every section. If something genuinely does not apply, write "N/A: reason".
-   Never invent content to fill a blank.
-5. Every diagram needs the table or argument that explains it. A diagram records design
-   decisions. It does not create them.
-6. Diagrams: Mermaid is preferred because it renders on GitHub. PlantUML or another tool is
-   accepted if the exported image is committed and embedded in this file.
-   Optionally, also add a JPG of each diagram in docs/design/diagrams/ (the Markdown prevails if they differ).
-7. Read Design_Deliverable_1_Example.md for the expected level of detail. Do not copy it.
--->
+
+Modificaciones:
+- Actualizar el nombre del requerimiento 11
+- Anadir el requerimiento 5 en la lista de los requirimientos pertinentes en esta arquitectura
 
 # Adres en Urgencias — Architectural & Detailed Design v1.0
 
@@ -36,8 +23,9 @@ Este diseño es necesario porque implementa la cola de priorizacion de los pacie
 | Requirement Use Case ID | Why it shapes the structure                                                                                                                           | Quality attribute, constraint or business rule involved |
 |---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------|
 | REQ-04                    | Introduce la nocion de turno y de fila de priorizacion                                                                                                | BR-TRG-02, BR-TRG-03                                    |
+| REQ-05                    | Si la situacion del paciente se deterioria, el sistema debe actualizar el nivel de triage de este paciente y actualizar la cola de priorizacion de los pacientes  | 
 | REQ-10                    | Es posible editar el tiempo de espera para cada nivel de triage, excluyendo el nivel 1 que necesita una atencion inmediata |                                                         |
-| REQ-11                    | Introduce la idea que un paciente no puede esperar mas del tiempo configurado por su nivel de triage. Por eso, el sistema puede priorizar a pacientes |                                                         |
+| REQ-11                    | El sistema debe quitar el paciente mas priorizado de la cola para darle atencion medica |                                                         |
 ---
 
 ## 2. Architectural Design
