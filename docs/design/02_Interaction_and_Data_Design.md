@@ -17,7 +17,6 @@ Select **two** important use cases from your own project that involve meaningful
 
 *Alcance: módulo "Gestión de turno" (Asignador de turno, Gestionador de cola de prioridad). Triage es un modulo externo a este módulo.*
 
-```mermaid
 sequenceDiagram
     participant TR as Triage
     participant REG as Registro
@@ -30,38 +29,48 @@ sequenceDiagram
         AT-->>TR: error DATOS_INVALIDOS
     else datos válidos
         AT->>AT: buscar copia local del paciente
-        alt copia local no encontrada
+        alt copia local encontrada
+            AT->>AT: iniciar transacción PostgreSQL
+            AT->>AT: generar número y crear Turno
+            AT->>GC: anadirPaciente(turno)
+            GC->>GC: existePaciente(idPaciente)
+            alt paciente duplicado
+                GC-->>AT: error PACIENTE_DUPLICADO
+                AT->>AT: ROLLBACK
+                AT-->>TR: error, estado sin cambios
+            else paciente nuevo
+                GC->>CN: encolar(turno) al final del nivel
+                CN-->>GC: turno encolado
+                GC-->>AT: paciente añadido
+                AT->>AT: COMMIT
+                AT-->>TR: turno asignado
+            end
+        else copia local no encontrada
             AT->>REG: obtenerDatosIdentificacion(idPaciente)
             alt Registro no encuentra al paciente
                 REG-->>AT: paciente no encontrado
-                AT-->>TR: error PACIENTE_NO_ENCONTRADO
-                break solicitud rechazada
-                    Note over TR,AT: No se modifica el estado local
-                end
+                AT-->>TR: error PACIENTE_NO_ENCONTRADO, sin cambios
             else paciente encontrado
                 REG-->>AT: datos de identidad
+                AT->>AT: iniciar transacción PostgreSQL
+                AT->>AT: guardar copia local mínima
+                AT->>AT: generar número y crear Turno
+                AT->>GC: anadirPaciente(turno)
+                GC->>GC: existePaciente(idPaciente)
+                alt paciente duplicado
+                    GC-->>AT: error PACIENTE_DUPLICADO
+                    AT->>AT: ROLLBACK
+                    AT-->>TR: error, estado sin cambios
+                else paciente nuevo
+                    GC->>CN: encolar(turno) al final del nivel
+                    CN-->>GC: turno encolado
+                    GC-->>AT: paciente añadido
+                    AT->>AT: COMMIT
+                    AT-->>TR: turno asignado
+                end
             end
-        else copia local encontrada
-            AT->>AT: usar copia local
-        end
-        AT->>AT: iniciar transacción PostgreSQL
-        AT->>AT: guardar copia local si se obtuvo de Registro
-        AT->>AT: generar número y crear Turno
-        AT->>GC: anadirPaciente(turno)
-        GC->>GC: existePaciente(idPaciente)
-        alt paciente duplicado
-            GC-->>AT: error PACIENTE_DUPLICADO
-            AT->>AT: ROLLBACK
-            AT-->>TR: error; estado sin cambios
-        else paciente nuevo
-            GC->>CN: encolar(turno) al final del nivel
-            CN-->>GC: turno encolado
-            GC-->>AT: paciente añadido
-            AT->>AT: COMMIT
-            AT-->>TR: turno asignado
         end
     end
-```
 
 | Use Case step or flow | Message(s) in the diagram | Information exchanged | Operation defined in (Deliverable 1) |
 |---|---|---|---|
