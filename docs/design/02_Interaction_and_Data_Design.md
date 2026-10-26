@@ -16,7 +16,7 @@ Select **two** important use cases from your own project that involve meaningful
 ### 1.1 Añadir un paciente a la cola de espera — from requirement REQ-04
 
 *Alcance: módulo "Gestión de turno" (Asignador de turno, Gestionador de cola de prioridad). Triage es un modulo externo a este módulo.*
-
+```mermaid
 sequenceDiagram
     participant TR as Triage
     participant REG as Registro
@@ -71,6 +71,7 @@ sequenceDiagram
             end
         end
     end
+```
 
 | Use Case step or flow | Message(s) in the diagram | Information exchanged | Operation defined in (Deliverable 1) |
 |---|---|---|---|
