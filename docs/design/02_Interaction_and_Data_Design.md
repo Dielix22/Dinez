@@ -3,7 +3,7 @@
 | **Team**    | Grupo 3                                                                                                                                                                                       |
 |-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Members** | - Bryan Gustavo Llontop Angulo (@BLlontopSec) - Diego Stevan Anacona Velez (@elDIEGO12) - Diego Ibáñez (@Dielix22) - Adrien ROHO (@hoverwars) - Sebastian Eisneider Rey Pretel (@sereypretel) |
-| **Status**  | Ready for review                                                                                                                                                                              |
+| **Status**  | Revised; REQ-11 tie-break and hospital time zone pending                                                                                                                                                                              |
 | **Date**    | 25/10/2026                                                                                                                                                                                    |
 | **Inputs** | `docs/design/01_Architectural_and_Detailed_Design.md`, Use Cases in `docs/requirements/`, Interaction & Contracts Design v0.1 (Class 13) |
 
@@ -29,58 +29,48 @@ sequenceDiagram
     alt datos inválidos (id vacío, nivel nulo o fuera de 2 a 5)
         AT-->>TR: error DATOS_INVALIDOS
     else datos válidos
-        AT->>AT: buscar copia local de paciente
-        alt copia local no disponible
+        AT->>AT: buscar copia local del paciente
+        alt copia local no encontrada
             AT->>REG: obtenerDatosIdentificacion(idPaciente)
             alt Registro no encuentra al paciente
                 REG-->>AT: paciente no encontrado
-                AT-->>TR: error PACIENTE_NO_ENCONTRADO (sin cambios)
-            else paciente encontrado
-                REG-->>AT: datos de identificación
-                AT->>AT: iniciar transacción PostgreSQL
-                AT->>AT: guardar copia local mínima
-                AT->>AT: generarNumeroTurno(nivel)
-                AT->>GC: anadirPaciente(turno)
-                GC->>GC: existePaciente(idPaciente)
-                alt paciente ya tiene turno en espera
-                    GC-->>AT: error PACIENTE_DUPLICADO
-                    AT->>AT: ROLLBACK
-                    AT-->>TR: error; estado sin cambios
-                else paciente nuevo
-                    GC->>CN: encolar(turno) al final del nivel
-                    CN-->>GC: turno encolado
-                    GC-->>AT: paciente añadido
-                    AT->>AT: COMMIT
-                    AT-->>TR: turno asignado
+                AT-->>TR: error PACIENTE_NO_ENCONTRADO
+                break solicitud rechazada
+                    Note over TR,AT: No se modifica el estado local
                 end
+            else paciente encontrado
+                REG-->>AT: datos de identidad
             end
-        else copia local disponible
-            AT->>AT: iniciar transacción PostgreSQL
-            AT->>AT: generarNumeroTurno(nivel)
-            AT->>GC: anadirPaciente(turno)
-            GC->>GC: existePaciente(idPaciente)
-            alt paciente ya tiene turno en espera
-                GC-->>AT: error PACIENTE_DUPLICADO
-                AT->>AT: ROLLBACK
-                AT-->>TR: error; estado sin cambios
-            else paciente nuevo
-                GC->>CN: encolar(turno) al final del nivel
-                CN-->>GC: turno encolado
-                GC-->>AT: paciente añadido
-                AT->>AT: COMMIT
-                AT-->>TR: turno asignado
-            end
+        else copia local encontrada
+            AT->>AT: usar copia local
+        end
+        AT->>AT: iniciar transacción PostgreSQL
+        AT->>AT: guardar copia local si se obtuvo de Registro
+        AT->>AT: generar número y crear Turno
+        AT->>GC: anadirPaciente(turno)
+        GC->>GC: existePaciente(idPaciente)
+        alt paciente duplicado
+            GC-->>AT: error PACIENTE_DUPLICADO
+            AT->>AT: ROLLBACK
+            AT-->>TR: error; estado sin cambios
+        else paciente nuevo
+            GC->>CN: encolar(turno) al final del nivel
+            CN-->>GC: turno encolado
+            GC-->>AT: paciente añadido
+            AT->>AT: COMMIT
+            AT-->>TR: turno asignado
         end
     end
 ```
 
 | Use Case step or flow | Message(s) in the diagram | Information exchanged | Operation defined in (Deliverable 1) |
 |---|---|---|---|
-| Main flow, step 1: Triage entrega el resultado | `asignarTurno(idPaciente, nivel)` | Número de registro del paciente y nivel de Triage (2 a 5) | `AsignadorDeTurno.asignarTurno` (sec. 3.2, 3.4) |
+| Main flow, step 1: Triage entrega el resultado | asignarTurno(idPaciente, nivel); consulta de identidad a Registro si falta copia local | Número de registro, nivel de Triage y datos mínimos de identidad cuando se consultan | AsignadorDeTurno.asignarTurno y Registro.obtenerDatosIdentificacion |
 | Main flow, step 2: se genera el número de turno | `generarNumeroTurno(nivel)` | Nivel → número con formato `T3-015`, contador diario por nivel | `AsignadorDeTurno.generarNumeroTurno` (privada, sec. 3.2) |
 | Main flow, step 3: se posiciona al paciente en la cola | `anadirPaciente(turno)`, `encolar(turno)` | `Turno` (número, idPaciente, nivel, horaLlegada); queda al final de los turnos de su nivel (BR-TRG-02, desempate por llegada) | `GestionadorColaPrioridad.anadirPaciente`, `ColaPorNivel.encolar` |
+| Exception: Registro no encuentra al paciente | PACIENTE_NO_ENCONTRADO | No se crea/actualiza copia local y no cambian contador, turno ni cola | AsignadorDeTurno consulta Registro (capacidad añadida en Documento 01) |
 | Exception: datos inválidos | `error de datos inválidos` | Rechazo sin generar turno ni avanzar el contador | `AsignadorDeTurno.asignarTurno`, paso 1 (sec. 3.4) |
-| Exception: paciente duplicado | `error de paciente duplicado`, `ROLLBACK` | Rechazo; se hace ROLLBACK y contador, turno y entrada de cola quedan sin cambios | `GestionadorColaPrioridad.anadirPaciente`, paso 4.1 (sec. 3.4) |
+| Exception: paciente duplicado | PACIENTE_DUPLICADO, ROLLBACK | Rechazo; contador, turno y entrada quedan sin cambios y el turno activo permanece intacto | GestionadorColaPrioridad.anadirPaciente (sec. 3.4) |
 
 ### 1.2 Retirar el paciente más prioritario de la cola de espera — from requirement REQ-11
 
@@ -250,7 +240,7 @@ erDiagram
 | Posición única por nivel entre los turnos en espera | Data constraint | Índice único parcial sobre `entrada_cola (nivel, posicion) WHERE hora_retiro IS NULL`. |
 | La entrada de cola coincide con el turno y con el nivel vigente del paciente mientras espera | Both | Clave foránea compuesta `(id_turno, id_paciente)` hacia `turno`. Para el nivel, un trigger comprueba que `entrada_cola.nivel = paciente.nivel_triage` mientras `hora_retiro IS NULL`; `actualizarNivelTriage` cambia ambos en una misma transacción. Las entradas ya retiradas conservan el nivel en el que esperaron (necesario para el tiempo de espera real vs. esperado). |
 | El número de turno no se repite en un día y no se puede modificar (CON-TRG-02) | Both | `UNIQUE (fecha_turno, numero_turno)`; el único camino de escritura es `AsignadorDeTurno`. |
-| El contador diario solo avanza y el número solo se consume si el turno se crea | Both | `CHECK (ultimo_numero >= 0)` y una única transacción PostgreSQL que incluye la copia local cuando aplica, incrementa el contador e inserta `turno` y `entrada_cola`; ante un duplicado se hace `ROLLBACK`, lo que sustituye al "revertir `contadores[nivel]`" (punto a iterar 1 de la sec. 1.1). |
+| El contador diario solo avanza y el número solo se consume si el turno se crea | Both | `CHECK (ultimo_numero >= 0)` y una única transacción PostgreSQL que incluye la copia local cuando aplica, incrementa el contador e inserta `turno` y `entrada_cola`; ante un duplicado se hace `ROLLBACK`, lo que sustituye al "revertir `contadores[nivel]`" (hallazgo resuelto en la sec. 1.1). |
 | Una cola por nivel y un límite por nivel | Data constraint | Clave primaria `nivel` en `cola_por_nivel` y en `limite_espera`. |
 | El tiempo límite de espera es positivo (REQ-10) | Both | `CHECK (limite_minutos > 0)`; `cambiarLimite` valida el valor. |
 | El retiro devuelve el turno más antiguo del nivel elegido (REQ-11, BR-TRG-02) | Component logic | `siguientePaciente` compara el primer turno de cada nivel con su límite; el retiro marca `hora_retiro` en la misma transacción. |
@@ -292,11 +282,11 @@ erDiagram
 
 | Check | Result |
 |---|---|
-| Every participant is an actor, component, class or external system from Deliverable 1 | **Parcial.** Triage, Atención médica y Estadística son externos; las clases del módulo están en sec. 3.2. El flujo incorpora Registro, que debe figurar como sistema externo/capacidad en Actividad 1. |
-| Every message corresponds to a capability or operation | **Parcial.** Añadir/verificar Registro.obtenerDatosIdentificacion. ROLLBACK reemplaza la reversión manual del contador. |
-| Every entity is reflected in class diagrams or justified | **Pendiente de reflejar en Documento 01.** Paciente debe ser copia local mínima; NivelTriage incluye NIVEL_1 aunque solo 2–5 tienen cola; entrada_cola persiste ColaPorNivel.turnos. |
-| Every persisted information element has one authoritative owner | **Coherente con la decisión, pendiente de reflejar en Documento 01.** Registro es autoridad de identidad; Asignador mantiene proyección local. Asignador mantiene contador y turno; GestionadorColaPrioridad mantiene entradas; GestionadorTiempoEspera mantiene límites. |
-| Contract agrees with sequence and data model | **Parcial hasta aplicar cambios al Documento 01 y verificar REQ-11.** El contrato añade consulta de Registro y transacción local. La selección “más excedido” frente a “más cerca de exceder” aún requiere trazabilidad al requisito. |
+| Every participant in a sequence diagram is an actor, component, class or external system from Deliverable 1 | **Parcial.** Triage, Registro, Atención médica y Estadística aparecen como sistemas externos en el Documento 01. La capacidad de consulta de identidad a Registro debe añadirse allí. |
+| Every message corresponds to a capability or operation | **Parcial.** Las operaciones originales del módulo están en la sec. 3.2 del Documento 01. Añadir obtenerDatosIdentificacion y reflejar ROLLBACK/COMMIT como parte de la operación transaccional. |
+| Every entity or document type is reflected in the class diagrams, or the reason it is not is stated | **Pendiente en Documento 01.** Añadir Paciente como copia local, ContadorTurno persistente y EntradaCola; incluir NIVEL_1 en NivelTriage. |
+| Every persisted information element has exactly one authoritative owner | **Definido en este documento; pendiente de reflejar en Documento 01.** Registro es autoridad de identidad; Triage es autoridad del nivel clínico; el módulo mantiene una copia local, turnos, contador, entradas y límites. |
+| The contract agrees with the sequence diagram and with the data model | **Coherente dentro del Documento 02.** El Documento 01 debe actualizarse para reflejar la misma transacción y los datos persistidos. REQ-11 permanece en la sección 1.2; sus decisiones de desempate se conservan tal como estaban en el diseño recibido y se señalan como preguntas abiertas si no constan en el requisito fuente. |
 
 **Changes required in Deliverable 1**
 
@@ -315,11 +305,10 @@ erDiagram
 
 ## 5. Open Questions
 
-- ¿Qué zona horaria hospitalaria determina el cambio de día para el contador?
-- En REQ-11, ¿cómo se desempata entre turnos que excedieron el límite?
-- Si ninguno excedió, ¿“más cerca de exceder” significa menor tiempo restante hasta su límite? ¿Cuál es el desempate?
-- ¿Cómo y cuándo se sincroniza la copia local de identidad desde Registro?
-- ¿REQ-04 confirma explícitamente inicio en 001 y reinicio diario por nivel?
+- En REQ-11, si varios turnos excedieron el límite, ¿cuál es el desempate? El diseño no elige aún uno.
+- Si ninguno excedió, la sec. 1.2 mantiene la regla escrita en el documento recibido: elegir al paciente más cerca de exceder su límite. Confirmar que esa regla aparece en REQ-11 o BR-TRG-02.
+- ¿Debe refrescarse una copia local de identidad existente cuando Registro cambie los datos? Por ahora solo se consulta Registro cuando falta la copia.
+- ¿Qué zona horaria hospitalaria determina el cambio de día para reiniciar el contador?
 
 ---
 
