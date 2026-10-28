@@ -1,4 +1,6 @@
-# Adres en Urgencias — Interaction & Data Design v1.0 (REQ-04 y REQ-11)
+# Adres en Urgencias — Interaction & Data Design v2.0 (REQ-04 y REQ-11)
+
+> **Modificación v2:** nueva regla de selección en la rama «ningún turno excedió su límite» del caso 1.2: ya no se toma el paciente más cercano a exceder su tiempo límite de espera, sino «el paciente más prioritario en términos de Triage» (nivel no vacío más urgente; a igual nivel, orden de llegada). Se actualizaron: la nota y los mensajes del diagrama 1.2, la fila correspondiente de la tabla de trazabilidad 1.2, la regla de negocio de la sec. 2.4, la pregunta abierta sobre desempates de la sec. 5 y la versión del título (v1.0 → v2.0). La rama de límite excedido (REQ-11) no cambia.
 
 | **Team**    | Grupo 3                                                                                                                                                                                       |
 |-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -86,11 +88,11 @@ sequenceDiagram
         GC-->>-AM: turno prioritario por límite excedido
     else ningún turno excedió su límite (BR-TRG-02)
         activate GC
-        Note over GC: tomamos el paciente que esta más cerca de exceder su tiempo limite de espera
-        GC->>+CN: retirar(idPaciente) del primer turno
+        Note over GC: tomamos el paciente más prioritario en términos de Triage
+        GC->>+CN: retirar(idPaciente) del primer turno del nivel más prioritario
         CN-->>-GC: turno retirado
         GC-)ES: registrar tiempo de espera real vs. esperado
-        GC-->>-AM: turno siguiente por nivel y orden de llegada
+        GC-->>-AM: turno del nivel más prioritario (orden de llegada dentro del nivel)
     end
 ```
 
@@ -100,7 +102,7 @@ sequenceDiagram
 | Main flow, step 2: se revisa el primer turno de cada nivel | `verLimite(nivel)`, `primero()`, `haExcedidoLimite(limite, ahora)` | Nivel → `Duration`; primer `Turno` del nivel; booleano | `GestionadorTiempoEspera.verLimite`, `ColaPorNivel.primero`, `Turno.haExcedidoLimite` |
 | Main flow, step 3: se retira y se entrega el paciente | `retirar(idPaciente)`, `registrar tiempo de espera real vs. esperado`, respuesta a Atención médica | `Turno` retirado; tiempo de espera real y límite del nivel enviados a Estadística | `ColaPorNivel.retirar`, `GestionadorColaPrioridad.quitarPaciente` (evento a Estadística: sec. 2.2) |
 | Alternative flow: un turno excedió su límite (REQ-11) | rama `existe un turno que excedió su límite` | Se elige el turno que más excedió su tiempo límite de espera; pasa antes que los demás, aunque su nivel sea menos prioritario | `GestionadorColaPrioridad.siguientePaciente` (decisión de base 2, sec. 3.2) |
-| Alternative flow: ningún turno excedió su límite (BR-TRG-02) | rama `ningún turno excedió su límite`, `retirar(idPaciente)` del primer turno | Se elige el paciente más cercano a exceder su tiempo límite de espera; se retira y se entrega a Atención médica | `GestionadorColaPrioridad.siguientePaciente`, `ColaPorNivel.retirar` |
+| Alternative flow: ningún turno excedió su límite (BR-TRG-02) | rama `ningún turno excedió su límite`, `retirar(idPaciente)` del primer turno del nivel más prioritario | Se elige el paciente más prioritario en términos de Triage (el nivel no vacío más urgente, de 2 a 5; a igual nivel, el más antiguo); se retira y se entrega a Atención médica | `GestionadorColaPrioridad.siguientePaciente`, `ColaPorNivel.retirar` |
 | Exception: cola vacía | `sin pacientes en espera` | Respuesta vacía a Atención médica | `GestionadorColaPrioridad.siguientePaciente` |
 
 ---
@@ -224,7 +226,7 @@ erDiagram
 | El contador diario solo avanza y el número solo se consume si el turno se crea | Both | `CHECK (ultimo_numero >= 0)` y una única transacción que incrementa el contador e inserta `turno` y `entrada_cola`; ante un duplicado se hace `ROLLBACK`, lo que sustituye al "revertir `contadores[nivel]`" (punto a iterar 1 de la sec. 1.1). |
 | Una cola por nivel y un límite por nivel | Data constraint | Clave primaria `nivel` en `cola_por_nivel` y en `limite_espera`. |
 | El tiempo límite de espera es positivo (REQ-10) | Both | `CHECK (limite_minutos > 0)`; `cambiarLimite` valida el valor. |
-| El retiro devuelve el turno más antiguo del nivel elegido (REQ-11, BR-TRG-02) | Component logic | `siguientePaciente` compara el primer turno de cada nivel con su límite; el retiro marca `hora_retiro` en la misma transacción. |
+| El retiro devuelve primero el turno que excedió su límite (REQ-11) y, si ninguno lo excedió, el más antiguo del nivel de Triage más prioritario no vacío (BR-TRG-02) | Component logic | `siguientePaciente` compara el primer turno de cada nivel con su límite; si ninguno lo excedió, elige el primer turno del nivel no vacío de menor número (más urgente); el retiro marca `hora_retiro` en la misma transacción. |
 | `hora_retiro` no es anterior a `hora_llegada` | Data constraint | Trigger sobre `entrada_cola`, porque un `CHECK` de PostgreSQL no puede comparar columnas de dos tablas. |
 
 > Aqui, suponemos que los numeros de turnos se reinician cada dia, pero se queda como una pregunta abierta como lo dijimos en el documento `REQ-04.md`
@@ -288,7 +290,7 @@ erDiagram
 
 - **Numeración de turnos:** ¿los números se reinician cada día y la primera asignación por nivel comienza en 001? El documento lo presenta como supuesto y señala que REQ-04/Q1 mantiene la pregunta abierta.
 - **Unicidad del documento de identidad:** el modelo indica que el campo documento no es único y remite a esta sección, pero no explica el motivo. ¿Debe permitirse que dos registros de paciente compartan ese dato?
-- **Desempates en REQ-11:** si dos o más pacientes excedieron su límite por la misma cantidad, ¿cuál se retira primero? Si ninguno lo excedió y varios están igual de cerca del límite, ¿qué criterio decide?
+- **Desempates en REQ-11:** si dos o más pacientes excedieron su límite por la misma cantidad, ¿cuál se retira primero?
 - **Autoridad sobre el nivel de Triage:** la sección 2.3 asigna Registro como dueño de paciente y nivel, mientras que AsignadorDeTurno.actualizarNivelTriage modifica ese nivel. ¿Qué componente es la fuente autoritativa y cómo se comunica el cambio?
 - **Datos de identidad desde Registro:** la sección 4 identifica que el módulo necesita documento, nombre y apellido de Registro. ¿Qué capacidad de Registro entrega esos datos y cuándo se actualizan en este módulo?
 
