@@ -123,7 +123,7 @@ classDiagram
         class GestionadorColaPrioridad {
             -colas : Map~NivelTriage, ColaPorNivel~
             -gestionadorTiempo : GestionadorTiempoEspera
-            +anadirPaciente(turno : Turno) void
+            +anadirPaciente(paciente: Paciente) Turno
             +actualizarPaciente(idPaciente : String, nuevoNivel : NivelTriage) Turno
             +quitarPaciente(idPaciente : String) Turno
             +siguientePaciente() Turno
@@ -149,8 +149,8 @@ classDiagram
             +cambiarLimite(nivel : NivelTriage, limite : Duration) void
         }
 
-        class NivelTriage {
-            ENUMERATION
+        class NivelTriage <<ENUMERATION>> {
+            NIVEL_1
             NIVEL_2
             NIVEL_3
             NIVEL_4
@@ -167,7 +167,10 @@ classDiagram
     GestionadorTiempoEspera ..> NivelTriage
 ```
 
-*Propuesta inicial, a iterar. Decisiones de base: (1) cuatro colas FIFO, una por nivel de Triage (niveles 2 a 5); (2) `siguientePaciente()` recorre las colas del nivel 2 al nivel 5, pero prioriza antes a un turno que haya excedido su límite de espera (REQ-11); (3) `actualizarPaciente` retira el turno de su cola actual y lo reubica en la del nuevo nivel.*
+*Propuesta inicial, a iterar. Decisiones de base:*
+- (1) cuatro colas FIFO, una por nivel de Triage (niveles 2 a 5). **El nivel de Triage 1 no tiene cola de prioridad, porque necesita atencion inmediata**
+- (2) `siguientePaciente()` recorre las colas del nivel 2 al nivel 5, pero prioriza antes a un turno que haya excedido su límite de espera (REQ-11)
+- (3) `actualizarPaciente` retira el turno de su cola actual y lo reubica en la del nuevo nivel.*
 
 ### 3.3 Class Responsibilities
 
