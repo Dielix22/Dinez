@@ -22,8 +22,8 @@ Select **two** important use cases from your own project that involve meaningful
 ```mermaid
 sequenceDiagram
     participant TR as Triage
-    participant AT as Asignador de turno
-    participant GC as Gestionador de cola de prioridad
+    participant AT as AsignadorDeTurno
+    participant GC as GestionadorColaPrioridad
     participant CN as ColaPorNivel
 
     TR->>+AT: asignarTurno(idPaciente, nivel)
@@ -64,9 +64,10 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant AM as Atención médica
-    participant GC as Gestionador de cola de prioridad
+    participant GC as GestionadorColaPrioridad
     participant CN as ColaPorNivel
-    participant GT as Gestionador de tiempo de espera
+    participant GT as GestionadorTiempoEspera
+    participant TU as Turno
     participant ES as Estadística
 
     AM->>+GC: siguientePaciente()
@@ -75,7 +76,10 @@ sequenceDiagram
         GT-->>-GC: limite de espera del nivel
         GC->>+CN: primero()
         CN-->>-GC: turno más antiguo del nivel o vacío
-        GC->>GC: turno.haExcedidoLimite(limite, ahora)
+        opt la cola del nivel no está vacía
+            GC->>+TU: haExcedidoLimite(limite, ahora)
+            TU-->>-GC: true / false
+        end
     end
     alt todas las colas están vacías
         GC-->>-AM: sin pacientes en espera
@@ -306,7 +310,7 @@ erDiagram
 
 ## 7. Consistency Checklist
 
-- [ ] Two use cases from the project, each traceable to a Use Case written in the requirements.
+- [X] Two use cases from the project, each traceable to a Use Case written in the requirements.
 - [ ] Each sequence diagram shows the main flow and at least one alternative or exception flow.
 - [ ] No business behavior is invented: anything unspecified is marked as an assumption or Open Question.
 - [ ] Section 2.1 explains what is NOT persisted as well as what is.

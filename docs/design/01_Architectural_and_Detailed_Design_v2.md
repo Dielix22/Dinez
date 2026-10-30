@@ -123,10 +123,10 @@ classDiagram
         class GestionadorColaPrioridad {
             -colas : Map~NivelTriage, ColaPorNivel~
             -gestionadorTiempo : GestionadorTiempoEspera
-            +anadirPaciente(paciente: Paciente) Turno
+            +anadirPaciente(turno: Turno) : void 
             +actualizarPaciente(idPaciente : String, nuevoNivel : NivelTriage) Turno
             +quitarPaciente(idPaciente : String) Turno
-            +siguientePaciente() Turno
+            +siguientePaciente() Turno?
             +verListaOrdenada() List~Turno~
             +existePaciente(idPaciente : String) boolean
         }
@@ -137,7 +137,7 @@ classDiagram
             +encolar(turno : Turno) void
             +insertar(turno : Turno, posicion : int) void
             +retirar(idPaciente : String) Turno
-            +primero() Turno
+            +primero() Turno?
             +listar() List~Turno~
         }
     }
