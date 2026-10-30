@@ -1,7 +1,10 @@
 
-Modificaciones:
-- Actualizar el nombre del requerimiento 11
-- Anadir el requerimiento 5 en la lista de los requirimientos pertinentes en esta arquitectura
+## Historial de modificaciones
+
+| Versión | Fecha | Modificación |
+|---|---|---|
+| v2.0 | 25/10/2026 | Actualizar el nombre del requerimiento 11. Añadir el requerimiento 5 en la lista de los requerimientos pertinentes en esta arquitectura. Añadir `NIVEL_1` al enum `NivelTriage` (sin cola de prioridad) y precisarlo en la decisión de base (1). |
+| v2.1 | 29/10/2026 | Diagrama de clases (sec. 3.2): añadir el campo `horaRetiro` a la clase `Turno`, coherente con el modelo de datos de `02_Interaction_and_Data_Design_v2.md` (`turno.hora_retiro`). |
 
 # Adres en Urgencias — Architectural & Detailed Design v1.0
 
@@ -114,6 +117,7 @@ classDiagram
             -idPaciente : String
             -nivelTriage : NivelTriage
             -horaLlegada : DateTime
+            -horaRetiro : DateTime
             +haExcedidoLimite(limite : Duration, ahora : DateTime) boolean
             +cambiarNivel(nuevoNivel : NivelTriage) void
         }
