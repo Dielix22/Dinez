@@ -1,7 +1,10 @@
 
-Modificaciones:
-- Actualizar el nombre del requerimiento 11
-- Anadir el requerimiento 5 en la lista de los requirimientos pertinentes en esta arquitectura
+## Historial de modificaciones
+
+| Versión | Fecha | Modificación |
+|---|---|---|
+| v2.0 | 25/10/2026 | Actualizar el nombre del requerimiento 11. Añadir el requerimiento 5 en la lista de los requerimientos pertinentes en esta arquitectura. Añadir `NIVEL_1` al enum `NivelTriage` (sin cola de prioridad) y precisarlo en la decisión de base (1). |
+| v2.1 | 29/10/2026 | Diagrama de clases (sec. 3.2): añadir el campo `horaRetiro` a la clase `Turno`, coherente con el modelo de datos de `02_Interaction_and_Data_Design_v2.md` (`turno.hora_retiro`). |
 
 # Adres en Urgencias — Architectural & Detailed Design v1.0
 
@@ -114,6 +117,7 @@ classDiagram
             -idPaciente : String
             -nivelTriage : NivelTriage
             -horaLlegada : DateTime
+            -horaRetiro : DateTime
             +haExcedidoLimite(limite : Duration, ahora : DateTime) boolean
             +cambiarNivel(nuevoNivel : NivelTriage) void
         }
@@ -123,10 +127,10 @@ classDiagram
         class GestionadorColaPrioridad {
             -colas : Map~NivelTriage, ColaPorNivel~
             -gestionadorTiempo : GestionadorTiempoEspera
-            +anadirPaciente(paciente: Paciente) Turno
+            +anadirPaciente(turno: Turno) : void 
             +actualizarPaciente(idPaciente : String, nuevoNivel : NivelTriage) Turno
             +quitarPaciente(idPaciente : String) Turno
-            +siguientePaciente() Turno
+            +siguientePaciente() Turno?
             +verListaOrdenada() List~Turno~
             +existePaciente(idPaciente : String) boolean
         }
@@ -137,7 +141,7 @@ classDiagram
             +encolar(turno : Turno) void
             +insertar(turno : Turno, posicion : int) void
             +retirar(idPaciente : String) Turno
-            +primero() Turno
+            +primero() Turno?
             +listar() List~Turno~
         }
     }

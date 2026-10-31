@@ -1,6 +1,13 @@
 # Adres en Urgencias — Interaction & Data Design v2.0 (REQ-04 y REQ-11)
 
-> **Modificación v2:** nueva regla de selección en la rama «ningún turno excedió su límite» del caso 1.2: ya no se toma el paciente más cercano a exceder su tiempo límite de espera, sino «el paciente más prioritario en términos de Triage» (nivel no vacío más urgente; a igual nivel, orden de llegada). Se actualizaron: la nota y los mensajes del diagrama 1.2, la fila correspondiente de la tabla de trazabilidad 1.2, la regla de negocio de la sec. 2.4, la pregunta abierta sobre desempates de la sec. 5 y la versión del título (v1.0 → v2.0). La rama de límite excedido (REQ-11) no cambia.
+## Historial de modificaciones
+
+| Versión | Fecha | Modificación |
+|---|---|---|
+| v2.0 | 25/10/2026 | Nueva regla de selección en la rama «ningún turno excedió su límite» del caso 1.2: ya no se toma el paciente más cercano a exceder su tiempo límite de espera, sino «el paciente más prioritario en términos de Triage» (nivel no vacío más urgente; a igual nivel, orden de llegada). Se actualizaron: la nota y los mensajes del diagrama 1.2, la fila correspondiente de la tabla de trazabilidad 1.2, la regla de negocio de la sec. 2.4, la pregunta abierta sobre desempates de la sec. 5 y la versión del título (v1.0 → v2.0). La rama de límite excedido (REQ-11) no cambia. |
+| v2.1 | 29/10/2026 | Diagramas de secuencia 1.1 y 1.2: todos los participantes internos son ahora clases (`AsignadorDeTurno`, `GestionadorColaPrioridad`, `GestionadorTiempoEspera`, `ColaPorNivel`). Se añadió el participante `Turno` en 1.2, con la llamada `haExcedidoLimite(limite, ahora)` (antes un automensaje de `GC`), dentro de un `opt` «la cola del nivel no está vacía». |
+| v2.2 | 29/10/2026 | Modelo de datos (sec. 2.2): se eliminó la entidad `entrada_cola`. Sus campos `posicion` y `hora_retiro` pasan a `turno`, junto con `nivel` (nivel en el que el turno espera o esperó; FK a `cola_por_nivel`), necesario para mantener el índice único (`nivel`, `posicion`). Se actualizaron las secciones 2.1, 2.2, 2.3, 2.4, 3 y 4 en consecuencia; el trigger de `hora_retiro` pasa a ser un `CHECK`. |
+| v2.3 | 29/10/2026 | Sec. 4, «Changes made to Deliverable 1»: se eliminaron los cambios 3 (`Turno` sin `nivelTriage`, con `fechaTurno`), 4 (`contadores` persistente) y 6 (`ROLLBACK` en lugar de «revertir `contadores[nivel]`»). Los cambios 5 y 7 pasan a ser 3 y 4, y se actualizaron las referencias a ellos en la tabla de coherencia. |
 
 | **Team**    | Grupo 3                                                                                                                                                                                       |
 |-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -22,8 +29,8 @@ Select **two** important use cases from your own project that involve meaningful
 ```mermaid
 sequenceDiagram
     participant TR as Triage
-    participant AT as Asignador de turno
-    participant GC as Gestionador de cola de prioridad
+    participant AT as AsignadorDeTurno
+    participant GC as GestionadorColaPrioridad
     participant CN as ColaPorNivel
 
     TR->>+AT: asignarTurno(idPaciente, nivel)
@@ -64,9 +71,10 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant AM as Atención médica
-    participant GC as Gestionador de cola de prioridad
+    participant GC as GestionadorColaPrioridad
     participant CN as ColaPorNivel
-    participant GT as Gestionador de tiempo de espera
+    participant GT as GestionadorTiempoEspera
+    participant TU as Turno
     participant ES as Estadística
 
     AM->>+GC: siguientePaciente()
@@ -75,7 +83,10 @@ sequenceDiagram
         GT-->>-GC: limite de espera del nivel
         GC->>+CN: primero()
         CN-->>-GC: turno más antiguo del nivel o vacío
-        GC->>GC: turno.haExcedidoLimite(limite, ahora)
+        opt la cola del nivel no está vacía
+            GC->>+TU: haExcedidoLimite(limite, ahora)
+            TU-->>-GC: true / false
+        end
     end
     alt todas las colas están vacías
         GC-->>-AM: sin pacientes en espera
@@ -119,7 +130,7 @@ sequenceDiagram
 | Turno (número `T3-015`, paciente, hora de llegada) | 1.1, 1.2 | Si | Debe sobrevivir a un reinicio del sistema; sin él se pierde el orden de los pacientes en espera. Se conserva después de retirado para poder calcular el tiempo de espera real. |
 | Contador diario de turnos por nivel | 1.1 | Si | Garantiza números únicos (CON-TRG-02) y que la secuencia no se repita tras un reinicio dentro del mismo día. Se reinicia cada día (REQ-04, Q1). |
 | Nivel de Triage (niveles 1 a 5) | 1.1, 1.2 | Si | Dato de referencia, clave foránea de pacientes, colas, límites y contadores. El nivel 1 existe como nivel del paciente, pero no tiene cola, límite ni contador: no entra en el algoritmo (BR-TRG-03). |
-| Cola por nivel (niveles 2 a 5) y posición de cada turno en ella | 1.1, 1.2 | Si | La posición no se puede deducir solo de la hora de llegada, porque `insertar(turno, posicion)` y `actualizarPaciente` reubican turnos. La entrada de cola conserva el nivel en el que el paciente esperó, aunque su nivel actual cambie después. |
+| Cola por nivel (niveles 2 a 5) y posición de cada turno en ella | 1.1, 1.2 | Si | La posición no se puede deducir solo de la hora de llegada, porque `insertar(turno, posicion)` y `actualizarPaciente` reubican turnos. El turno conserva el nivel en el que el paciente esperó, aunque su nivel actual cambie después. |
 | Instante de retiro de la cola | 1.2 | Si | Distingue a los pacientes en espera de los ya llamados y permite calcular el tiempo de espera real. |
 | Tiempo límite de espera por nivel | 1.2 | Si | Es configurable (REQ-10) y debe conservarse entre reinicios. |
 | Lista ordenada de la cola (`verListaOrdenada`) | Visualización de cola | No | Se recalcula a pedido a partir de las posiciones y los niveles. |
@@ -136,7 +147,7 @@ Se elige el modelo **relacional** porque el stack ya fijó PostgreSQL (ADR-0001)
 
 El **nivel de Triage (1 a 5) pertenece al paciente** (`paciente.nivel_triage`); `turno` ya no lo repite. Los niveles 2 a 5 son los únicos con cola, límite y contador (BR-TRG-03, REQ-10): `cola_por_nivel`, `limite_espera` y `contador_turno` llevan `CHECK (nivel BETWEEN 2 AND 5)`.
 
-Cada clase del diseño (Documento 01, sec. 3.2) tiene una representación: `Turno`, `ColaPorNivel`, `NivelTriage` y los datos de `GestionadorTiempoEspera` y de `AsignadorDeTurno.contadores` son tablas propias. `GestionadorColaPrioridad` es una fachada y no tiene tabla: opera sobre `cola_por_nivel` y `entrada_cola`. La entidad `Paciente` se añade en este módulo.
+Cada clase del diseño (Documento 01, sec. 3.2) tiene una representación: `Turno`, `ColaPorNivel`, `NivelTriage` y los datos de `GestionadorTiempoEspera` y de `AsignadorDeTurno.contadores` son tablas propias. `GestionadorColaPrioridad` es una fachada y no tiene tabla: opera sobre `cola_por_nivel` y sobre las columnas de cola de `turno` (`nivel`, `posicion`, `hora_retiro`). La entidad `Paciente` se añade en este módulo.
 
 ```mermaid
 erDiagram
@@ -145,8 +156,7 @@ erDiagram
     NIVEL_TRIAGE ||--o{ CONTADOR_TURNO : "cuenta, solo niveles 2 a 5"
     NIVEL_TRIAGE ||--o{ PACIENTE : "clasifica"
     PACIENTE ||--o{ TURNO : "recibe"
-    TURNO ||--o| ENTRADA_COLA : "ocupa"
-    COLA_POR_NIVEL ||--o{ ENTRADA_COLA : "contiene"
+    COLA_POR_NIVEL ||--o{ TURNO : "contiene"
 
     NIVEL_TRIAGE {
         smallint nivel PK "1 a 5"
@@ -178,17 +188,13 @@ erDiagram
         varchar numero_turno "ej. T3-015"
         varchar id_paciente FK
         timestamp hora_llegada
-    }
-    ENTRADA_COLA {
-        bigint id_turno PK, FK
-        varchar id_paciente FK
-        smallint nivel FK "2 a 5"
+        smallint nivel FK "2 a 5, nivel en el que espera o esperó"
         int posicion "mayor o igual a 1"
         timestamp hora_retiro "NULL mientras espera"
     }
 ```
 
-*(`TURNO` tiene además `UNIQUE (fecha_turno, numero_turno)` y `UNIQUE (id_turno, id_paciente)`. `ENTRADA_COLA` referencia `(id_turno, id_paciente)` en `TURNO` y `nivel` en `COLA_POR_NIVEL`. Un turno retirado conserva su fila en `ENTRADA_COLA` con `hora_retiro` rellena y el nivel en el que esperó.)*
+*(`TURNO` tiene además `UNIQUE (fecha_turno, numero_turno)`. `TURNO.nivel` referencia `COLA_POR_NIVEL`. Un turno retirado conserva su fila con `hora_retiro` rellena y el nivel en el que esperó.)*
 
 | Entity / document type | Meaning in the system | Identifier | Constraints (required, unique, allowed values) |
 |---|---|---|---|
@@ -196,38 +202,38 @@ erDiagram
 | `limite_espera` (`GestionadorTiempoEspera.limites`) | Tiempo límite de espera de un nivel (REQ-10, REQ-11). | `nivel` (también FK a `nivel_triage`) | `nivel` entre 2 y 5 (el nivel 1 se atiende de inmediato, REQ-10). Exactamente una fila por nivel. `limite_minutos` obligatorio y mayor que 0. |
 | `paciente` (entidad Paciente) | Paciente que entra en el módulo "Turno". Guarda la identidad dada por Registro (número de registro, documento, nombre, apellido) y el nivel de Triage vigente (dado por Triage); no guarda otros datos personales ni clínicos. | `id_paciente` (número de registro) | `id_paciente` obligatorio, no vacío, único. `documento`, `nombre` y `apellido` obligatorios y no vacíos (`documento` no es único: ver sec. 5). `nivel_triage` obligatorio, FK a `nivel_triage` (1 a 5), es el nivel vigente del paciente. `fecha_creacion` obligatoria. |
 | `contador_turno` (`AsignadorDeTurno.contadores`) | Último número emitido para un nivel en un día. | (`fecha`, `nivel`) | `nivel` entre 2 y 5. `ultimo_numero` obligatorio y mayor o igual a 0. Solo crece (ver 2.4). |
-| `turno` (`Turno`) | Turno asignado a un paciente en una visita. | `id_turno` | `fecha_turno`, `numero_turno`, `id_paciente` y `hora_llegada` obligatorios. (`fecha_turno`, `numero_turno`) único. FK a `paciente`. El nivel se lee de `paciente.nivel_triage`; el prefijo del número (`T3`) es el nivel en el momento de la emisión. |
+| `turno` (`Turno`, `ColaPorNivel.turnos`) | Turno asignado a un paciente en una visita, con su presencia en la cola de su nivel, su posición y su retiro. | `id_turno` | `fecha_turno`, `numero_turno`, `id_paciente`, `hora_llegada`, `nivel` y `posicion` obligatorios. (`fecha_turno`, `numero_turno`) único. FK a `paciente`. `nivel` entre 2 y 5, FK a `cola_por_nivel`, es el nivel en el que el turno espera o esperó; el prefijo del número (`T3`) es el nivel en el momento de la emisión. `posicion` mayor o igual a 1. (`nivel`, `posicion`) único entre los turnos con `hora_retiro` vacía, es decir en espera. `id_paciente` único entre los turnos en espera. `hora_retiro`, si existe, es mayor o igual a `hora_llegada`. |
 | `cola_por_nivel` (`ColaPorNivel`) | La cola FIFO de un nivel. | `nivel` (también FK a `nivel_triage`) | `nivel` entre 2 y 5. Exactamente una cola por nivel con cola. |
-| `entrada_cola` (`ColaPorNivel.turnos`) | Presencia de un turno en la cola de su nivel, con su posición y su retiro. | `id_turno` (también FK a `turno`) | `posicion` obligatoria y mayor o igual a 1. (`nivel`, `posicion`) único entre las entradas con `hora_retiro` vacía, es decir en espera. `id_paciente` único entre las entradas en espera. `(id_turno, id_paciente)` debe coincidir con el turno. `nivel` es FK a `cola_por_nivel` y es el nivel en el que el turno esperó. `hora_retiro`, si existe, es mayor o igual a `hora_llegada`. |
 
 ### 2.3 Data Ownership
 
 | Information | Authoritative owner (component responsible for maintaining it) | Consumed by (uses it without owning it) | Access through |
 |---|---|---|---|
 | `paciente` (incluido su `nivel_triage`) | Registro | Gestionador de cola de prioridad (verifica duplicados y lee el nivel) | `AsignadorDeTurno.asignarTurno`, `actualizarNivelTriage`; la cola consulta con `existePaciente` |
-| `turno` | Asignador de turno | Gestionador de cola de prioridad, Estadística (a través del evento) | `AsignadorDeTurno.asignarTurno`, `actualizarNivelTriage`; la cola lo recibe como parámetro |
+| `turno` (identidad: `id_turno`, `fecha_turno`, `numero_turno`, `id_paciente`, `hora_llegada`) | Asignador de turno | Gestionador de cola de prioridad, Estadística (a través del evento) | `AsignadorDeTurno.asignarTurno`, `actualizarNivelTriage`; la cola lo recibe como parámetro |
+| `turno` (estado de cola: `nivel`, `posicion`, `hora_retiro`) | Gestionador de cola de prioridad | Asignador de turno (los inicializa al crear el turno, a través de `anadirPaciente`), Visualización de cola, Atención médica | `anadirPaciente`, `actualizarPaciente`, `quitarPaciente`, `siguientePaciente` |
 | `contador_turno` | Asignador de turno | Nadie más | Operaciones internas de `AsignadorDeTurno` (`generarNumeroTurno`) |
-| `cola_por_nivel` y `entrada_cola` | Gestionador de cola de prioridad | Visualización de cola (lista ordenada), Atención médica (siguiente paciente) | `anadirPaciente`, `actualizarPaciente`, `quitarPaciente`, `siguientePaciente`, `verListaOrdenada`, `existePaciente` |
+| `cola_por_nivel` | Gestionador de cola de prioridad | Visualización de cola (lista ordenada), Atención médica (siguiente paciente) | `anadirPaciente`, `actualizarPaciente`, `quitarPaciente`, `siguientePaciente`, `verListaOrdenada`, `existePaciente` |
 | `limite_espera` | Gestionador de tiempo de espera | Gestionador de cola de prioridad | `verLimite`, `cambiarLimite` |
 | `nivel_triage` | Gestionador de tiempo de espera | Todos los demás componentes del módulo | Enumeración `NivelTriage` (datos de referencia de solo lectura; incluye el nivel 1) |
 
-*(`GestionadorColaPrioridad` no escribe directamente en `turno` ni en `paciente`: solo lee los datos que recibe y gestiona `entrada_cola`. El cambio de nivel de un paciente pasa por `AsignadorDeTurno.actualizarNivelTriage`, que actualiza `paciente.nivel_triage` y pide a la cola que reubique su entrada.)*
+*(`GestionadorColaPrioridad` no escribe en `paciente` ni en las columnas de identidad de `turno`: solo escribe las columnas de cola (`nivel`, `posicion`, `hora_retiro`). El cambio de nivel de un paciente pasa por `AsignadorDeTurno.actualizarNivelTriage`, que actualiza `paciente.nivel_triage` y pide a la cola que reubique su entrada.)*
 
 ### 2.4 Business rules and invariants enforced in data
 
 | Business rule or invariant | Where it is enforced (component logic / data constraint / both) | How |
 |---|---|---|
-| El nivel de Triage va de 1 a 5, pero solo los niveles 2 a 5 tienen cola, límite y contador; el nivel 1 no entra en la cola (BR-TRG-03) | Both | `paciente.nivel_triage` es FK a `nivel_triage` (1 a 5). `cola_por_nivel`, `limite_espera`, `contador_turno` y `entrada_cola` llevan `CHECK (nivel BETWEEN 2 AND 5)`, así que un paciente de nivel 1 no puede tener entrada de cola. El Asignador no crea turno para el nivel 1 y rechaza el nivel nulo o fuera de rango (sec. 3.4 del Documento 01, paso 1). |
-| Un paciente no puede tener dos turnos en espera (`existePaciente`) | Both | Índice único parcial sobre `entrada_cola (id_paciente) WHERE hora_retiro IS NULL`; la lógica comprueba antes con `existePaciente` y traduce la violación en "error de paciente duplicado". |
+| El nivel de Triage va de 1 a 5, pero solo los niveles 2 a 5 tienen cola, límite y contador; el nivel 1 no entra en la cola (BR-TRG-03) | Both | `paciente.nivel_triage` es FK a `nivel_triage` (1 a 5). `cola_por_nivel`, `limite_espera`, `contador_turno` y `turno` llevan `CHECK (nivel BETWEEN 2 AND 5)`, así que un paciente de nivel 1 no puede tener turno en cola. El Asignador no crea turno para el nivel 1 y rechaza el nivel nulo o fuera de rango (sec. 3.4 del Documento 01, paso 1). |
+| Un paciente no puede tener dos turnos en espera (`existePaciente`) | Both | Índice único parcial sobre `turno (id_paciente) WHERE hora_retiro IS NULL`; la lógica comprueba antes con `existePaciente` y traduce la violación en "error de paciente duplicado". |
 | Orden de llegada dentro de un nivel (BR-TRG-02) | Component logic | `encolar` asigna `posicion = máxima del nivel + 1`; el desempate lo da la posición. |
-| Posición única por nivel entre los turnos en espera | Data constraint | Índice único parcial sobre `entrada_cola (nivel, posicion) WHERE hora_retiro IS NULL`. |
-| La entrada de cola coincide con el turno y con el nivel vigente del paciente mientras espera | Both | Clave foránea compuesta `(id_turno, id_paciente)` hacia `turno`. Para el nivel, un trigger comprueba que `entrada_cola.nivel = paciente.nivel_triage` mientras `hora_retiro IS NULL`; `actualizarNivelTriage` cambia ambos en una misma transacción. Las entradas ya retiradas conservan el nivel en el que esperaron (necesario para el tiempo de espera real vs. esperado). |
+| Posición única por nivel entre los turnos en espera | Data constraint | Índice único parcial sobre `turno (nivel, posicion) WHERE hora_retiro IS NULL`. |
+| El nivel del turno coincide con el nivel vigente del paciente mientras espera | Both | Un trigger comprueba que `turno.nivel = paciente.nivel_triage` mientras `hora_retiro IS NULL`; `actualizarNivelTriage` cambia ambos en una misma transacción. Los turnos ya retirados conservan el nivel en el que esperaron (necesario para el tiempo de espera real vs. esperado). |
 | El número de turno no se repite en un día y no se puede modificar (CON-TRG-02) | Both | `UNIQUE (fecha_turno, numero_turno)`; el único camino de escritura es `AsignadorDeTurno`. |
-| El contador diario solo avanza y el número solo se consume si el turno se crea | Both | `CHECK (ultimo_numero >= 0)` y una única transacción que incrementa el contador e inserta `turno` y `entrada_cola`; ante un duplicado se hace `ROLLBACK`, lo que sustituye al "revertir `contadores[nivel]`" (punto a iterar 1 de la sec. 1.1). |
+| El contador diario solo avanza y el número solo se consume si el turno se crea | Both | `CHECK (ultimo_numero >= 0)` y una única transacción que incrementa el contador e inserta `turno` (ya con su `nivel` y su `posicion`); ante un duplicado se hace `ROLLBACK`, lo que sustituye al "revertir `contadores[nivel]`" (punto a iterar 1 de la sec. 1.1). |
 | Una cola por nivel y un límite por nivel | Data constraint | Clave primaria `nivel` en `cola_por_nivel` y en `limite_espera`. |
 | El tiempo límite de espera es positivo (REQ-10) | Both | `CHECK (limite_minutos > 0)`; `cambiarLimite` valida el valor. |
 | El retiro devuelve primero el turno que excedió su límite (REQ-11) y, si ninguno lo excedió, el más antiguo del nivel de Triage más prioritario no vacío (BR-TRG-02) | Component logic | `siguientePaciente` compara el primer turno de cada nivel con su límite; si ninguno lo excedió, elige el primer turno del nivel no vacío de menor número (más urgente); el retiro marca `hora_retiro` en la misma transacción. |
-| `hora_retiro` no es anterior a `hora_llegada` | Data constraint | Trigger sobre `entrada_cola`, porque un `CHECK` de PostgreSQL no puede comparar columnas de dos tablas. |
+| `hora_retiro` no es anterior a `hora_llegada` | Data constraint | `CHECK (hora_retiro IS NULL OR hora_retiro >= hora_llegada)` sobre `turno`: ambas columnas están ahora en la misma tabla. |
 
 > Aqui, suponemos que los numeros de turnos se reinician cada dia, pero se queda como una pregunta abierta como lo dijimos en el documento `REQ-04.md`
 
@@ -237,7 +243,7 @@ erDiagram
 
 **Interaction chosen** (from diagram 1.1, message `asignarTurno(idPaciente, nivel)`):
 
-> Triage entrega a `AsignadorDeTurno` el resultado de la clasificación de un paciente y recibe a cambio el turno asignado, o un error. Es la interacción central de REQ-04 y la única que escribe en `contador_turno`, `turno` y `entrada_cola`.
+> Triage entrega a `AsignadorDeTurno` el resultado de la clasificación de un paciente y recibe a cambio el turno asignado, o un error. Es la interacción central de REQ-04 y la única que escribe en `contador_turno` y `turno`.
 
 |Element|Specification|
 |---|---|
@@ -245,15 +251,15 @@ erDiagram
 |**Input** (parameters and types)|`idPaciente`: texto, número de registro del paciente (no vacío). `nivel`: `NivelTriage` con valor entre NIVEL_2 y NIVEL_5 (nivel de Triage del paciente).|
 |**Output** (successful result and data structure)|Un `Turno` con: `numeroTurno` (formato `T<nivel>-<NNN>`, ej. `T3-015`), `idPaciente`, `nivel`, `horaLlegada`.|
 |**Preconditions** (what the caller must satisfy before invoking)|1. `idPaciente` no es vacío. 2. `nivel` no es nulo y está entre NIVEL_2 y NIVEL_5. 3. El paciente no tiene un turno en espera (el Asignador lo verifica a través de `GestionadorColaPrioridad.existePaciente`; si no se cumple, es un fallo definido, no un comportamiento indefinido).|
-|**Postconditions** (what is guaranteed on successful completion)|1. Existe una fila nueva en `turno` con un `numero_turno` que no se repite ese día (CON-TRG-02). 2. `contador_turno (fecha, nivel)` avanzó en exactamente 1. 3. Existe una fila nueva en `entrada_cola` con `hora_retiro` vacía y `posicion` = (máxima posición en espera del nivel) + 1, es decir, el paciente quedó al final de su nivel (BR-TRG-02). 4. Todo lo anterior ocurrió en una sola transacción: o están los tres cambios o ninguno.|
-|**Failure outcomes** (each failure, and what state is left after it)|**DATOS_INVALIDOS** (`idPaciente` vacío, `nivel` nulo o fuera de 2 a 5): no se genera número, no se toca el contador, no se escribe nada. **PACIENTE_DUPLICADO** (el paciente ya tiene un turno en espera): `ROLLBACK`; el contador queda como estaba, no se crea turno ni entrada de cola y el turno existente queda intacto. En ambos casos el estado persistido es idéntico al de antes de la llamada.|
-|**Invariants and side effects** (what must stay true, what may change)|Invariantes: un paciente tiene como máximo una entrada en espera; (`nivel`, `posicion`) es único entre los turnos en espera; el contador diario solo crece y un número solo se consume si el turno se crea; `numero_turno` no se modifica una vez emitido. Efectos secundarios: escribe en `contador_turno`, `turno` y `entrada_cola`. No notifica a Estadística (eso ocurre solo al retirar, caso 1.2).|
+|**Postconditions** (what is guaranteed on successful completion)|1. Existe una fila nueva en `turno` con un `numero_turno` que no se repite ese día (CON-TRG-02). 2. `contador_turno (fecha, nivel)` avanzó en exactamente 1. 3. Esa fila de `turno` tiene `hora_retiro` vacía y `posicion` = (máxima posición en espera del nivel) + 1, es decir, el paciente quedó al final de su nivel (BR-TRG-02). 4. Todo lo anterior ocurrió en una sola transacción: o están los dos cambios o ninguno.|
+|**Failure outcomes** (each failure, and what state is left after it)|**DATOS_INVALIDOS** (`idPaciente` vacío, `nivel` nulo o fuera de 2 a 5): no se genera número, no se toca el contador, no se escribe nada. **PACIENTE_DUPLICADO** (el paciente ya tiene un turno en espera): `ROLLBACK`; el contador queda como estaba, no se crea ningún turno nuevo y el turno existente queda intacto. En ambos casos el estado persistido es idéntico al de antes de la llamada.|
+|**Invariants and side effects** (what must stay true, what may change)|Invariantes: un paciente tiene como máximo un turno en espera; (`nivel`, `posicion`) es único entre los turnos en espera; el contador diario solo crece y un número solo se consume si el turno se crea; `numero_turno` no se modifica una vez emitido. Efectos secundarios: escribe en `contador_turno` y `turno`. No notifica a Estadística (eso ocurre solo al retirar, caso 1.2).|
 
 **Testable examples**
 
 |Case|Before|Request|Expected|
 |---|---|---|---|
-|Éxito|`contador_turno` (hoy, 3) = 14; nivel 3 tiene 2 pacientes en espera; el paciente `P-1001` no tiene turno|`asignarTurno("P-1001", 3)`|Devuelve `T3-015`; contador = 15; `entrada_cola` con `posicion = 3` y `hora_retiro` vacía|
+|Éxito|`contador_turno` (hoy, 3) = 14; nivel 3 tiene 2 pacientes en espera; el paciente `P-1001` no tiene turno|`asignarTurno("P-1001", 3)`|Devuelve `T3-015`; contador = 15; `turno` con `posicion = 3` y `hora_retiro` vacía|
 |Paciente duplicado|`P-1001` ya espera con `T3-015`; contador nivel 3 = 15|`asignarTurno("P-1001", 3)`|Error `PACIENTE_DUPLICADO`; contador sigue en 15; no hay segundo turno; `T3-015` intacto|
 |Datos inválidos (id vacío)|Cualquier estado|`asignarTurno("", 3)`|Error `DATOS_INVALIDOS`; ningún cambio de estado|
 |Datos inválidos (nivel fuera de rango)|Cualquier estado|`asignarTurno("P-2002", 6)`|Error `DATOS_INVALIDOS`; ningún cambio de estado|
@@ -266,11 +272,11 @@ erDiagram
 
 |Check|Result|
 |---|---|
-|Every participant in a sequence diagram is an actor, a component, a class or an external system from Deliverable 1|**Cumple.** Triage, Atención médica y Estadística son sistemas externos (Documento 01, sec. 2.1). `AsignadorDeTurno`, `GestionadorColaPrioridad`, `GestionadorTiempoEspera` y `ColaPorNivel` son clases de la sec. 3.2. `Registro` es externo pero no aparece en los diagramas: el caso 1.1 solo recibe `idPaciente` (ver Cambio 7).|
-|Every message corresponds to a capability, operation or contract|**Cumple.** `asignarTurno`, `generarNumeroTurno`, `anadirPaciente`, `existePaciente`, `encolar`, `siguientePaciente`, `verLimite`, `primero`, `retirar` y `haExcedidoLimite` existen en el diagrama de clases (sec. 3.2). El evento a Estadística coincide con la flecha de la sec. 2.2. Excepción: `revertir contadores[nivel]` del caso 1.1 y de la sec. 3.4 no coincide con el modelo de datos, que usa una transacción (Cambio 6).|
-|Every entity or document type is reflected in the class diagrams, or the reason it is not is stated|**Parcial → se resuelve con los Cambios 1 a 5.** Tienen clase: `turno`, `cola_por_nivel`, `limite_espera`, `nivel_triage` y `contador_turno`. No la tienen todavía: `paciente` (no existe en la sec. 3.2) y el nivel 1 (el enum solo tiene NIVEL_2 a NIVEL_5). `entrada_cola` es la representación persistente de `ColaPorNivel.turnos`.|
+|Every participant in a sequence diagram is an actor, a component, a class or an external system from Deliverable 1|**Cumple.** Triage, Atención médica y Estadística son sistemas externos (Documento 01, sec. 2.1). `AsignadorDeTurno`, `GestionadorColaPrioridad`, `GestionadorTiempoEspera` y `ColaPorNivel` son clases de la sec. 3.2. `Registro` es externo pero no aparece en los diagramas: el caso 1.1 solo recibe `idPaciente` (ver Cambio 4).|
+|Every message corresponds to a capability, operation or contract|**Cumple.** `asignarTurno`, `generarNumeroTurno`, `anadirPaciente`, `existePaciente`, `encolar`, `siguientePaciente`, `verLimite`, `primero`, `retirar` y `haExcedidoLimite` existen en el diagrama de clases (sec. 3.2). El evento a Estadística coincide con la flecha de la sec. 2.2. Excepción: `revertir contadores[nivel]` del caso 1.1 y de la sec. 3.4 no coincide con el modelo de datos, que usa una transacción (ver sec. 6).|
+|Every entity or document type is reflected in the class diagrams, or the reason it is not is stated|**Parcial → se resuelve con los Cambios 1 a 3.** Tienen clase: `turno`, `cola_por_nivel`, `limite_espera`, `nivel_triage` y `contador_turno`. No la tienen todavía: `paciente` (no existe en la sec. 3.2) y el nivel 1 (el enum solo tiene NIVEL_2 a NIVEL_5). `ColaPorNivel.turnos` se representa con las columnas `nivel`, `posicion` y `hora_retiro` de `turno`.|
 |Every persisted information element has exactly one authoritative owner|**Parcial.** Cada elemento tiene un único dueño en la sec. 2.3, salvo `paciente`: se declara a Registro como dueño, pero `nivel_triage` lo escribe `AsignadorDeTurno.actualizarNivelTriage`, y Registro es externo.|
-|The contract agrees with the sequence diagram and with the data model (same behavior in all three views)|**Cumple, con el Cambio 6.** El contrato de `asignarTurno` (sec. 3) sigue el modelo de datos (una transacción y `ROLLBACK`, índices únicos de la sec. 2.4) y el flujo del diagrama 1.1. Al aplicar el Cambio 6, el diagrama y la sec. 3.4 del Documento 01 quedan alineados con ambos.|
+|The contract agrees with the sequence diagram and with the data model (same behavior in all three views)|**Cumple, salvo la reversión manual del contador (ver sec. 6).** El contrato de `asignarTurno` (sec. 3) sigue el modelo de datos (una transacción y `ROLLBACK`, índices únicos de la sec. 2.4) y el flujo del diagrama 1.1, excepto por `revertir contadores[nivel]`.|
 
 **Changes made to Deliverable 1 because of this deliverable**
 
@@ -278,11 +284,8 @@ erDiagram
 > 
 > 1. **Sec. 3.2 y 3.3, nueva clase `Paciente`** (`idPaciente`, `documento`, `nombre`, `apellido`, `nivelTriage`, `fechaCreacion`). Motivo: el modelo de datos la necesita para verificar duplicados (`existePaciente`) y para guardar el nivel vigente. Pertenece al componente _Asignador de turno_.
 > 2. **Sec. 3.2 y 3.3, `NivelTriage`:** añadir `NIVEL_1` (sin cola, límite ni contador) y cambiar "los cuatro niveles" por "los cinco niveles, de los cuales solo 2 a 5 tienen cola". Motivo: `paciente.nivel_triage` va de 1 a 5 (BR-TRG-03).
-> 3. **Sec. 3.2, `Turno`:** quitar `nivelTriage` como atributo propio (el nivel vigente se lee de `Paciente`) y añadir `fechaTurno`. `cambiarNivel` pasa a ser `actualizarNivelTriage` sobre el paciente. Motivo: evitar dos fuentes del mismo dato.
-> 4. **Sec. 3.2, `AsignadorDeTurno.contadores`:** deja de ser un `Map<NivelTriage, int>` en memoria y pasa a ser el dato persistente `contador_turno`, con clave (`fecha`, `nivel`). Motivo: la numeración debe sobrevivir a un reinicio y reiniciarse cada día.
-> 5. **Sec. 3.2, `ColaPorNivel.turnos`:** se persiste como `entrada_cola`, con `posicion` y `horaRetiro`. `retirar` marca `horaRetiro` en lugar de borrar la entrada. Motivo: Estadística necesita el tiempo de espera real.
-> 6. **Sec. 3.4 y hallazgo de la sec. 4:** sustituir "revertir `contadores[nivel]`" por "la operación es una única transacción; si el paciente está duplicado se hace `ROLLBACK` y el contador no avanza". El hallazgo de la sec. 4 pasa de "cambiaría" a "cambiado". En el diagrama 1.1, cambiar `revertir contadores[nivel]` por una nota de rollback de la transacción.
-> 7. **Sec. 2.2, tabla de componentes:** como el módulo guarda `documento`, `nombre` y `apellido`, _Asignador de turno_ requiere de Registro la capacidad "obtener los datos de identificación de un paciente".
+> 3. **Sec. 3.2, `Turno`:** añadir `horaRetiro` (aplicado en el Documento 01 v2). `ColaPorNivel.turnos` se persiste en las columnas `nivel`, `posicion` y `hora_retiro` de `turno`. `retirar` marca `horaRetiro` en lugar de borrar el turno. Motivo: Estadística necesita el tiempo de espera real.
+> 4. **Sec. 2.2, tabla de componentes:** como el módulo guarda `documento`, `nombre` y `apellido`, _Asignador de turno_ requiere de Registro la capacidad "obtener los datos de identificación de un paciente".
 
 ---
 
@@ -306,12 +309,12 @@ erDiagram
 
 ## 7. Consistency Checklist
 
-- [ ] Two use cases from the project, each traceable to a Use Case written in the requirements.
-- [ ] Each sequence diagram shows the main flow and at least one alternative or exception flow.
-- [ ] No business behavior is invented: anything unspecified is marked as an assumption or Open Question.
-- [ ] Section 2.1 explains what is NOT persisted as well as what is.
-- [ ] The data model has identifiers, relationships and constraints, not only boxes.
-- [ ] Every piece of principal information has one authoritative owner, and consumers are listed (Section 2.3).
-- [ ] The contract defines input, output, preconditions, postconditions and failure outcomes.
-- [ ] Sequence, data model and contract describe the same behavior.
-- [ ] Diagrams render correctly on GitHub (or the exported images are embedded).
+- [X] Two use cases from the project, each traceable to a Use Case written in the requirements.
+- [X] Each sequence diagram shows the main flow and at least one alternative or exception flow.
+- [X] No business behavior is invented: anything unspecified is marked as an assumption or Open Question.
+- [X] Section 2.1 explains what is NOT persisted as well as what is.
+- [X] The data model has identifiers, relationships and constraints, not only boxes.
+- [X] Every piece of principal information has one authoritative owner, and consumers are listed (Section 2.3).
+- [X] The contract defines input, output, preconditions, postconditions and failure outcomes.
+- [X] Sequence, data model and contract describe the same behavior.
+- [X] Diagrams render correctly on GitHub (or the exported images are embedded).
