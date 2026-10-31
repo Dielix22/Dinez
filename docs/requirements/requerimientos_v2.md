@@ -26,7 +26,7 @@
 | RF-10   | El sistema permite configurar el tiempo de espera maximo para cada nivel de triage (Excluyendo el nivel 1 donde debe ser una atencion inmediata)                                                                                                                        |
 | RF-11   | El sistema debe priorizar un paciente que tiene un tiempo de espera que supera el limite configurado por su nivel de triage.                                                                                                                                          |
 
-| RF-12   | El sistema debe quitar de la cola al paciente con nivel de triage más priorizado para darle atención médica(BR-TRG-02)                                                                                                                                         |
+| RF-12   | El sistema debe quitar de la cola al paciente con nivel de triage más priorizado para darle atención médica.                                                                                                                                         |
 
 
 ## Requisitos no funcionales
