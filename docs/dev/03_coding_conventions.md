@@ -52,9 +52,9 @@ Use one word per concept: *paciente*, not sometimes *usuario* or *cliente*.
 | Element | Convention | Example |
 |---|---|---|
 | Package | lower case, no underscores | `cola.domain` |
-| Class / record / enum / interface | `UpperCamelCase`, nouns | `ColaPorNivel`, `NivelTriage` |
-| Method | `lowerCamelCase`, verbs; boolean queries read as questions | `asignarTurno`, `haExcedidoLimite`, `existePaciente` |
-| Field / variable / parameter | `lowerCamelCase`, meaningful | `limiteEspera`, `horaLlegada` |
+| Class / record / enum / interface | `PascalCase`, nouns | `ColaPorNivel`, `NivelTriage` |
+| Method | `camelCase`, verbs; boolean queries read as questions | `asignarTurno`, `haExcedidoLimite`, `existePaciente` |
+| Field / variable / parameter | `camelCase`, meaningful | `limiteEspera`, `horaLlegada` |
 | Constant (`static final`) and enum constant | `UPPER_SNAKE_CASE` | `NIVEL_1` |
 | Test class | `<ClassUnderTest>Test` | `GestionadorColaPrioridadTest` |
 | Test method | Behaviour in plain words | `servesExpiredTurnBeforeHigherLevel` |
@@ -88,7 +88,7 @@ Domain terms keep the same Spanish names as the back end (a `Turno` is a `Turno`
 | Element | Guideline |
 |---|---|
 | Method | ≤ 50 lines |
-| Class | ≤ 500 lines; one reason to change |
+| Class | ≤ 500 lines |
 | File | One top-level type per file |
 
 These are triggers for a conversation in review, not mechanical limits. `GestionadorColaPrioridad` is flagged in the design as the class most likely to grow.
