@@ -40,7 +40,7 @@ npm ci          # first time, and after every change of package-lock.json
 npm run dev
 ```
 
-Open <http://localhost:5173>. The page shows "¡Hola mundo!". The server reloads the browser automatically when a file is saved. Stop it with `Ctrl+C`.
+Open <http://localhost:5173>. The server reloads the browser automatically when a file is saved. Stop it with `Ctrl+C`.
 
 Use `npm ci` (not `npm install`) to install exactly the versions pinned in `package-lock.json`. Use `npm install --save-exact <package>` only when adding a dependency on purpose (see §5).
 
