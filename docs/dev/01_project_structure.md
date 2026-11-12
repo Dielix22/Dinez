@@ -34,13 +34,22 @@ Dinez/
 │   ├── backend/                      # Java application
 │   │   ├── ...                       #   application code
 │   │   └── tests/                    #   back-end tests
-│   └── frontend/                     # React application
-│       ├── ...                       #   application code
-│       └── tests/                    #   front-end tests
+│   └── frontend/                     # React + TypeScript application (Vite)
+│       ├── src/                      #   application code
+│       │   ├── pages/                #     one component per screen
+│       │   └── i18n/                 #     user-facing text (Spanish)
+│       ├── tests/                    #   front-end tests
+│       ├── index.html                #   entry point
+│       ├── package.json              #   scripts and pinned dependencies
+│       ├── package-lock.json         #   lock file (committed)
+│       ├── vite.config.ts            #   Vite and Vitest configuration
+│       ├── tsconfig.json             #   TypeScript configuration
+│       └── README.md                 #   build, run and test commands
 ├── docs/
 │   ├── business/                     # the problem: requirements, user stories, domain material
 │   │   └── requirements/
 │   ├── dev/                          # the solution and how we build it
+│   │   ├── code/                     #   how to set up and run the code
 │   │   ├── design/                   #   architecture and detailed design
 │   │   └── decisiones/               #   ADR / RFC
 │   └── templates/                    # ADR, RFC, requirement and design templates
