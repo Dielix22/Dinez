@@ -2,7 +2,7 @@
 
 React + TypeScript + Vite, React Router and Material UI (MUI).
 
-Requires Node.js 20+ (developed with Node 24).
+Requires Node.js 22.12+ (developed with Node 24). Full guide: `docs/dev/code/frontend_setup.md`.
 
 | Goal                        | Command (from `src/frontend/`) |
 | --------------------------- | ------------------------------ |
