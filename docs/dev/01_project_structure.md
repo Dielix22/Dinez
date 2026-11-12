@@ -29,18 +29,29 @@ This document defines how the repository is organised so that every team member 
 ```text
 Dinez/
 ├── .github/
-│   ├── workflows/                    # CI definition (build + tests on every PR)
-│   └── ISSUE_TEMPLATE/
+│   └── workflows/                    # CI definition (build + tests on every PR)
 ├── src/
 │   ├── backend/                      # Java application
-│   └── frontend/                     # React application
+│   │   ├── ...                       #   application code
+│   │   └── tests/                    #   back-end tests
+│   └── frontend/                     # React + TypeScript application (Vite)
+│       ├── src/                      #   application code
+│       │   ├── pages/                #     one component per screen
+│       │   └── i18n/                 #     user-facing text (Spanish)
+│       ├── tests/                    #   front-end tests
+│       ├── index.html                #   entry point
+│       ├── package.json              #   scripts and pinned dependencies
+│       ├── package-lock.json         #   lock file (committed)
+│       ├── vite.config.ts            #   Vite and Vitest configuration
+│       ├── tsconfig.json             #   TypeScript configuration
+│       └── README.md                 #   build, run and test commands
 ├── docs/
 │   ├── business/                     # the problem: requirements, user stories, domain material
 │   │   └── requirements/
 │   ├── dev/                          # the solution and how we build it
+│   │   ├── code/                     #   code-related documentation, e.g. how to run the solution
 │   │   ├── design/                   #   architecture and detailed design
-│   │   ├── decisiones/               #   ADR / RFC
-│   │   └── 0N_*.md                   #   engineering conventions (this set of documents)
+│   │   └── decisiones/               #   ADR / RFC
 │   └── templates/                    # ADR, RFC, requirement and design templates
 ├── .editorconfig
 ├── .gitattributes
@@ -50,7 +61,7 @@ Dinez/
 
 Rules:
 
-1. **`src/backend/` and `src/frontend/` are independent projects inside one repository**, each with its own dependency file (at the root of its folder) and its own README section for build, run and test commands. All product code lives under `src/`; the repository root only holds configuration and documentation. A top-level section of the root `README.md` gives the exact commands to run the whole product.
+1. **`src/backend/` and `src/frontend/` are independent projects inside one repository**, each with its own dependency file (at the root of its folder), its own `tests/` folder next to the application code and its own README section for build, run and test commands. All product code lives under `src/`; the repository root only holds configuration and documentation. A top-level section of the root `README.md` gives the exact commands to run the whole product.
 2. **`docs/business/`** holds the *problem* (requirements, user stories, domain material); **`docs/dev/`** holds the *solution and the way we work* (design, decisions, conventions); **`docs/templates/`** holds the document templates. Do not mix them.
 3. **Nothing generated or machine-specific is committed**: build output, dependency folders, IDE settings, logs, local database files, `.env` files.
 4. **Dependency lock files and any build-tool wrapper are committed**, so that everyone builds with the same versions.
