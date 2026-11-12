@@ -32,8 +32,11 @@ Dinez/
 │   └── workflows/                    # CI definition (build + tests on every PR)
 ├── src/
 │   ├── backend/                      # Java application
+│   │   ├── ...                       #   application code
+│   │   └── tests/                    #   back-end tests
 │   └── frontend/                     # React application
-├── tests/                            # tests (back end and front end)
+│       ├── ...                       #   application code
+│       └── tests/                    #   front-end tests
 ├── docs/
 │   ├── business/                     # the problem: requirements, user stories, domain material
 │   │   └── requirements/
@@ -49,7 +52,7 @@ Dinez/
 
 Rules:
 
-1. **`src/backend/` and `src/frontend/` are independent projects inside one repository**, each with its own dependency file (at the root of its folder) and its own README section for build, run and test commands. All product code lives under `src/`; the repository root only holds configuration and documentation. A top-level section of the root `README.md` gives the exact commands to run the whole product.
+1. **`src/backend/` and `src/frontend/` are independent projects inside one repository**, each with its own dependency file (at the root of its folder), its own `tests/` folder next to the application code and its own README section for build, run and test commands. All product code lives under `src/`; the repository root only holds configuration and documentation. A top-level section of the root `README.md` gives the exact commands to run the whole product.
 2. **`docs/business/`** holds the *problem* (requirements, user stories, domain material); **`docs/dev/`** holds the *solution and the way we work* (design, decisions, conventions); **`docs/templates/`** holds the document templates. Do not mix them.
 3. **Nothing generated or machine-specific is committed**: build output, dependency folders, IDE settings, logs, local database files, `.env` files.
 4. **Dependency lock files and any build-tool wrapper are committed**, so that everyone builds with the same versions.
