@@ -29,18 +29,17 @@ This document defines how the repository is organised so that every team member 
 ```text
 Dinez/
 ├── .github/
-│   ├── workflows/                    # CI definition (build + tests on every PR)
-│   └── ISSUE_TEMPLATE/
+│   └── workflows/                    # CI definition (build + tests on every PR)
 ├── src/
 │   ├── backend/                      # Java application
 │   └── frontend/                     # React application
+├── tests/                            # tests (back end and front end)
 ├── docs/
 │   ├── business/                     # the problem: requirements, user stories, domain material
 │   │   └── requirements/
 │   ├── dev/                          # the solution and how we build it
 │   │   ├── design/                   #   architecture and detailed design
-│   │   ├── decisiones/               #   ADR / RFC
-│   │   └── 0N_*.md                   #   engineering conventions (this set of documents)
+│   │   └── decisiones/               #   ADR / RFC
 │   └── templates/                    # ADR, RFC, requirement and design templates
 ├── .editorconfig
 ├── .gitattributes
