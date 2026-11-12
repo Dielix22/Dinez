@@ -49,7 +49,7 @@ Dinez/
 │   ├── business/                     # the problem: requirements, user stories, domain material
 │   │   └── requirements/
 │   ├── dev/                          # the solution and how we build it
-│   │   ├── code/                     #   how to set up and run the code
+│   │   ├── code/                     #   code-related documentation, e.g. how to run the solution
 │   │   ├── design/                   #   architecture and detailed design
 │   │   └── decisiones/               #   ADR / RFC
 │   └── templates/                    # ADR, RFC, requirement and design templates
