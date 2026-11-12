@@ -87,7 +87,7 @@ Technologies: React, TypeScript, Vite, React Router and Material UI (MUI). The r
 
 These rules come from [03 Coding Conventions](../03_coding_conventions.md):
 
-- **Language:** code, comments and identifiers are in English. Text shown to users is Spanish and lives only in `src/i18n/messages.ts`; never write it directly in a component.
+- **Language:** code, comments and identifiers are in English. Text shown to users is Spanish and lives only in `src/i18n/messages.ts`; never write it directly in a component (see [front-end i18n](frontend_i18n.md)).
 - **Naming:** components and their files in `PascalCase`, one component per file (`PriorityQueue.tsx`); hooks start with `use`; variables and props in `camelCase`; constants in `UPPER_SNAKE_CASE`. Domain terms are the same as in the back end (a `Ticket` is a `Ticket`).
 - **No business rules in the UI.** The back end is the source of truth; components display data and send user actions.
 - **Adding a page:** create `src/pages/MyPage.tsx`, add a `<Route>` in `src/App.tsx`, and add a test in `tests/`.
