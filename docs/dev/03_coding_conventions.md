@@ -27,17 +27,6 @@
 
 Business documents in `docs/business` keep their original language and may still contain Spanish terms; this is accepted.
 
-**Glossary.** Spanish terms from the business and design documents map to one fixed English name in the code. Keep the table up to date when a new domain concept appears.
-
-| Spanish (business / design) | English (code) |
-|---|---|
-| Turno | `Ticket` |
-| Paciente | `Patient` |
-| Cola por nivel | `LevelQueue` |
-| Nivel de triage | `TriageLevel` |
-| Tiempo de espera | `WaitTime` |
-| Límite de espera | `WaitLimit` |
-
 Use one word per concept: *patient*, not sometimes *user* or *client*.
 
 ---
