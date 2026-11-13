@@ -8,5 +8,8 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    # The provided database may already contain objects in the schema. Baseline at 0 so that every migration (V1+) is still applied.
+    baseline-on-migrate: true
+    baseline-version: 0
 
   

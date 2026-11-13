@@ -27,6 +27,8 @@
 CREATE DATABASE urgencias_db;
 ```
 
+- On a database whose schema is **not empty** and has no `flyway_schema_history` table (e.g. the shared database provided for production), Flyway would refuse to start. `baseline-on-migrate: true` with `baseline-version: 0` makes it record a baseline at version 0 and then apply **all** migrations (V1 onwards). If an existing object has the same name as one created by a migration, the migration fails and must be fixed with a new migration or by using another schema.
+
 - Automated tests do **not** use PostgreSQL or Flyway: they run on in-memory H2 with Flyway disabled (see [ADR-0004](../decisiones/ADR-0004-backend-tooling.md)).
 
 ## 2. Current migrations

@@ -134,6 +134,7 @@ docker compose down               # stop and remove the container
 | Symptom | Likely cause |
 |---|---|
 | Job fails at *Configure SSH* or `Host key verification failed` | `VM_HOST` / `VM_PORT` is wrong or the server is not reachable from GitHub |
+| Logs show `Found non-empty schema(s) "public" but no schema history table` | Flyway baseline missing; `baseline-on-migrate` must be `true` in `application.yaml` (see [Database Migrations](database_migrations.md)) |
 | `Permission denied (publickey)` | `VM_KEY` does not match the server's `authorized_keys`, or `VM_USER` is wrong |
 | Container `unhealthy`, logs show `Connection refused` / `password authentication failed` | Wrong `DB_*` values, or the database is not reachable from the server |
 | Page refresh on a front-end route returns 404 | The front end was not built into the image (check the `frontend-build` stage) |
