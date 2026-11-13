@@ -3,8 +3,7 @@ name: Deploy
 # Runs on every push to main, i.e. every merged pull request.
 on:
   push:
-    # TEMPORARY: dep/deploy-app is only here to test the deployment; remove before merging.
-    branches: [main, dep/deploy-app]
+    branches: [main]
 
 concurrency:
   group: deploy-production
