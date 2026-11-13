@@ -1,6 +1,9 @@
 // User-facing text is Spanish and centralised here (docs/dev/03_coding_conventions.md §2).
 export const MESSAGES = {
   helloWorld: "¡Hola mundo!",
+  home: {
+    goToTickets: "Probar la asignación de turno",
+  },
   tickets: {
     title: "Asignación de turno",
     subtitle: "Simula el resultado que entregaría Triage",
