@@ -30,16 +30,17 @@ jobs:
       - name: Configure SSH
         env:
           VM_KEY: ${{ secrets.VM_KEY }}
-          VM_KNOWN_HOSTS: ${{ vars.VM_KNOWN_HOSTS }}
+          VM_HOST: ${{ vars.VM_HOST }}
+          VM_PORT: ${{ vars.VM_PORT || '22' }}
         run: |
           install -m 700 -d ~/.ssh
           printf '%s\n' "$VM_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          printf '%s\n' "$VM_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh-keyscan -p "$VM_PORT" "$VM_HOST" > ~/.ssh/known_hosts
           cat > ~/.ssh/config <<CONF
           Host deploy-target
-            HostName ${{ vars.VM_HOST }}
-            Port ${{ vars.VM_PORT || '22' }}
+            HostName $VM_HOST
+            Port $VM_PORT
             User ${{ vars.VM_USER }}
             IdentityFile ~/.ssh/deploy_key
             IdentitiesOnly yes

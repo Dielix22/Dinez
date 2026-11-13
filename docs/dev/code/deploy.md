@@ -82,7 +82,7 @@ Flyway runs the migrations on startup, so there is no separate migration step. L
 `.github/workflows/deploy.yml` runs on every **push to `main`** (a merged pull request) and uses the `Production` GitHub environment. Runs never overlap (`concurrency`). Steps:
 
 1. Build the image, tagged `g1_team_3_app:<commit sha>` and `g1_team_3_app:latest`.
-2. Configure SSH from the secret key and the pinned host key (strict host key checking).
+2. Configure SSH from the secret key; the server host key is fetched with `ssh-keyscan` (see the security note below).
 3. Generate `infra/.env` from the secrets (`umask 077`; values single-quoted so `$` is not interpolated).
 4. Create `~/g1_team_3_app` on the server and copy `compose.yml` and `.env` into it.
 5. Stream the image: `docker save | gzip | ssh … "gunzip | docker load"`.
@@ -107,11 +107,12 @@ Create a **`Production`** environment (Settings → Environments) and add:
 | `DB_PASSWORD` | Secret | Database password (must not contain a single quote `'`) |
 | `VM_HOST` | Variable | Server host name or IP |
 | `VM_USER` | Variable | SSH user |
-| `VM_KNOWN_HOSTS` | Variable | Output of `ssh-keyscan -H <host>` (pins the server identity) |
 | `VM_PORT` | Variable, optional | SSH port, default `22` |
 | `APP_PORT` | Variable, optional | Published port, default `8080` |
 
 Generate a dedicated key pair with `ssh-keygen -t ed25519 -f deploy_key -C g1_team_3_deploy -N ""`: the private file goes into `VM_KEY`, the `.pub` file into the server's `authorized_keys`. Never commit either of them.
+
+**Security note:** the server host key is not pinned in a variable; the workflow fetches it with `ssh-keyscan` on each run. This keeps the configuration simple, but the first key received is trusted, so a man-in-the-middle between GitHub and the server could impersonate it. Authentication of the deployment user is still done by the private key, which is never sent to the server. If this becomes a concern, store the output of `ssh-keyscan` in a variable and write it to `known_hosts` instead.
 
 ---
 
@@ -132,7 +133,7 @@ docker compose down               # stop and remove the container
 
 | Symptom | Likely cause |
 |---|---|
-| Job fails at *Transfer the image* with `Host key verification failed` | `VM_KNOWN_HOSTS` is empty or does not match the server |
+| Job fails at *Configure SSH* or `Host key verification failed` | `VM_HOST` / `VM_PORT` is wrong or the server is not reachable from GitHub |
 | `Permission denied (publickey)` | `VM_KEY` does not match the server's `authorized_keys`, or `VM_USER` is wrong |
 | Container `unhealthy`, logs show `Connection refused` / `password authentication failed` | Wrong `DB_*` values, or the database is not reachable from the server |
 | Page refresh on a front-end route returns 404 | The front end was not built into the image (check the `frontend-build` stage) |
