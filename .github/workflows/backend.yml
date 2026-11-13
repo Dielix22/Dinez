@@ -15,17 +15,19 @@ jobs:
         working-directory: ./src/backend
 
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up JDK 25
-      uses: actions/setup-java@v4
-      with:
-        java-version: '25-ea'
-        distribution: 'oracle'
-        cache: maven
-        
-    - name: Ensure mvnw is executable
-      run: chmod +x mvnw
-        
-    - name: Run Tests
-      run: ./mvnw test
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+          cache-dependency-path: src/backend/pom.xml
+
+      - name: Ensure mvnw is executable
+        run: chmod +x mvnw
+
+      - name: Run Tests
+        run: ./mvnw test -B
