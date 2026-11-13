@@ -1,0 +1,31 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'src/backend/**'
+      - '.github/workflows/backend.yml'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./src/backend
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up JDK 25
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25-ea'
+        distribution: 'oracle'
+        cache: maven
+        
+    - name: Ensure mvnw is executable
+      run: chmod +x mvnw
+        
+    - name: Run Tests
+      run: ./mvnw test
