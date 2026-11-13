@@ -38,6 +38,7 @@ Dinez/
 │   └── frontend/                     # React + TypeScript application (Vite)
 │       ├── src/                      #   application code
 │       │   ├── pages/                #     one component per screen
+│       │   ├── api/                  #     calls to the back end
 │       │   └── i18n/                 #     user-facing text (Spanish)
 │       ├── tests/                    #   front-end tests
 │       ├── index.html                #   entry point
