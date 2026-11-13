@@ -1,0 +1,87 @@
+name: Deploy
+
+# Runs on every push to main, i.e. every merged pull request.
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  IMAGE_NAME: g1_team_3_app
+  REMOTE_DIR: g1_team_3_app
+
+jobs:
+  deploy:
+    name: Build image and deploy over SSH
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the Docker image
+        run: |
+          docker build -f infra/Dockerfile \
+            --tag "$IMAGE_NAME:${{ github.sha }}" \
+            --tag "$IMAGE_NAME:latest" .
+
+      - name: Configure SSH
+        env:
+          VM_KEY: ${{ secrets.VM_KEY }}
+          VM_KNOWN_HOSTS: ${{ vars.VM_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VM_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$VM_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<CONF
+          Host deploy-target
+            HostName ${{ vars.VM_HOST }}
+            Port ${{ vars.VM_PORT || '22' }}
+            User ${{ vars.VM_USER }}
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+          CONF
+
+      - name: Generate the environment file
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          APP_PORT: ${{ vars.APP_PORT }}
+        run: |
+          umask 077
+          {
+            printf "DB_URL='%s'\n" "$DB_URL"
+            printf "DB_USER='%s'\n" "$DB_USER"
+            printf "DB_PASSWORD='%s'\n" "$DB_PASSWORD"
+            printf "APP_PORT='%s'\n" "${APP_PORT:-8080}"
+          } > infra/.env
+
+      - name: Upload deployment files
+        run: |
+          ssh deploy-target "mkdir -p ~/$REMOTE_DIR"
+          scp infra/compose.yml infra/.env "deploy-target:$REMOTE_DIR/"
+
+      - name: Transfer the image
+        run: docker save "$IMAGE_NAME:latest" | gzip | ssh deploy-target "gunzip | docker load"
+
+      - name: Start the application
+        run: |
+          ssh deploy-target "cd ~/$REMOTE_DIR && chmod 600 .env && docker compose up -d --remove-orphans && docker image prune -f"
+
+      - name: Wait for the container to be healthy
+        run: |
+          ssh deploy-target 'bash -s' <<'REMOTE'
+          for attempt in $(seq 1 30); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' g1_team_3_app)
+            echo "Health status: $status"
+            [ "$status" = "healthy" ] && exit 0
+            sleep 5
+          done
+          docker logs --tail 50 g1_team_3_app
+          exit 1
+          REMOTE

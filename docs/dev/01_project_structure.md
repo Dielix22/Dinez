@@ -29,7 +29,8 @@ This document defines how the repository is organised so that every team member 
 ```text
 Dinez/
 ├── .github/
-│   └── workflows/                    # CI definition (build + tests on every PR)
+│   └── workflows/                    # CI definition (build + tests on every PR) and deployment
+├── infra/                            # Dockerfile and docker compose for production
 ├── src/
 │   ├── backend/                      # Java application
 │   │   ├── ...                       #   application code

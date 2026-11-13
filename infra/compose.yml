@@ -1,0 +1,17 @@
+# Production deployment of the application. No database service: the database
+# is provided externally and reached through the DB_* variables of the .env file.
+services:
+  app:
+    image: g1_team_3_app:latest
+    container_name: g1_team_3_app
+    env_file:
+      - .env
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
