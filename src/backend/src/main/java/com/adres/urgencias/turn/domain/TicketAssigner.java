@@ -8,27 +8,30 @@ import com.adres.urgencias.shared.domain.TriageLevel;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.EnumMap;
-import java.util.Map;
 
 /**
- * Generates sequential daily ticket numbers per triage level and delegates queueing to PriorityQueueManager (REQ-04, CON-TRG-02).
+ * Generates sequential daily ticket numbers per triage level and delegates queueing to
+ * PriorityQueueManager (REQ-04, CON-TRG-02, BR-TRG-04). It keeps no state: the counters are in
+ * storage, keyed by day and level, so the numbering restarts each day by itself. Call it inside the
+ * transaction that stores the patient, so a rejected assignment does not consume a number.
  */
 public class TicketAssigner {
 
     private final PriorityQueueManager priorityQueueManager;
-    private final Map<TriageLevel, Integer> dailyCounters;
+    private final TicketCounterRepository counters;
     private final Clock clock;
-    private LocalDate currentCounterDate;
 
-    public TicketAssigner(PriorityQueueManager priorityQueueManager, Clock clock) {
-        if (priorityQueueManager == null || clock == null) {
-            throw new InvalidDataException("PriorityQueueManager and clock must not be null");
+    public TicketAssigner(
+            PriorityQueueManager priorityQueueManager,
+            TicketCounterRepository counters,
+            Clock clock) {
+        if (priorityQueueManager == null || counters == null || clock == null) {
+            throw new InvalidDataException(
+                    "PriorityQueueManager, counters and clock must not be null");
         }
         this.priorityQueueManager = priorityQueueManager;
+        this.counters = counters;
         this.clock = clock;
-        this.dailyCounters = new EnumMap<>(TriageLevel.class);
-        this.currentCounterDate = LocalDate.now(clock);
     }
 
     /**
@@ -47,25 +50,15 @@ public class TicketAssigner {
 
         LocalDateTime now = LocalDateTime.now(clock);
         LocalDate today = now.toLocalDate();
-        resetCountersIfNewDay(today);
 
-        String ticketNumber = generateNextTicketNumber(level);
+        String ticketNumber = generateNextTicketNumber(today, level);
         Ticket ticket = new Ticket(null, today, ticketNumber, patientId, now, level, 1, null);
 
-        priorityQueueManager.addPatient(ticket);
-        return ticket;
+        return priorityQueueManager.addPatient(ticket);
     }
 
-    private void resetCountersIfNewDay(LocalDate today) {
-        if (!today.equals(currentCounterDate)) {
-            dailyCounters.clear();
-            currentCounterDate = today;
-        }
-    }
-
-    private String generateNextTicketNumber(TriageLevel level) {
-        int nextNumber = dailyCounters.getOrDefault(level, 0) + 1;
-        dailyCounters.put(level, nextNumber);
+    private String generateNextTicketNumber(LocalDate today, TriageLevel level) {
+        int nextNumber = counters.nextNumber(today, level);
         return String.format("T%d-%03d", level.getLevel(), nextNumber);
     }
 }

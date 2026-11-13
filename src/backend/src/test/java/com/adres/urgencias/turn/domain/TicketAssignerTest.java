@@ -10,14 +10,15 @@ import com.adres.urgencias.shared.domain.DuplicatePatientException;
 import com.adres.urgencias.shared.domain.InvalidDataException;
 import com.adres.urgencias.shared.domain.Ticket;
 import com.adres.urgencias.shared.domain.TriageLevel;
+import com.adres.urgencias.testsupport.InMemoryTicketCounterRepository;
+import com.adres.urgencias.testsupport.InMemoryTicketRepository;
+import com.adres.urgencias.testsupport.InMemoryWaitLimitRepository;
 import com.adres.urgencias.wait.domain.WaitTimeManager;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -32,13 +33,12 @@ class TicketAssignerTest {
     @BeforeEach
     void setUp() {
         clock = new MutableClock(LocalDateTime.of(2026, 11, 12, 10, 0).atZone(ZONE).toInstant(), ZONE);
-        WaitTimeManager waitTimeManager = new WaitTimeManager(Map.of(
-                TriageLevel.LEVEL_2, Duration.ofMinutes(30),
-                TriageLevel.LEVEL_3, Duration.ofMinutes(60),
-                TriageLevel.LEVEL_4, Duration.ofMinutes(120),
-                TriageLevel.LEVEL_5, Duration.ofMinutes(240)));
-        priorityQueueManager = new PriorityQueueManager(waitTimeManager);
-        ticketAssigner = new TicketAssigner(priorityQueueManager, clock);
+        priorityQueueManager =
+                new PriorityQueueManager(
+                        new InMemoryTicketRepository(),
+                        new WaitTimeManager(new InMemoryWaitLimitRepository()));
+        ticketAssigner =
+                new TicketAssigner(priorityQueueManager, new InMemoryTicketCounterRepository(), clock);
     }
 
     @Test

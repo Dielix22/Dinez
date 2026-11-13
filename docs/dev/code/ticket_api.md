@@ -9,8 +9,9 @@
 ```mermaid
 flowchart LR
     FE["Front end<br/>page /tickets"] -->|POST /api/tickets| API["API<br/>TicketController + TicketAssignmentService"]
-    API -->|1. store the patient| DB[(patient table)]
+    API -->|1. store the patient| DB[(PostgreSQL<br/>patient, ticket,<br/>ticket_counter, wait_limit)]
     API -->|"2. assignTicket(patientId, level)"| TA["Ticket assigner<br/>TicketAssigner (domain)"]
+    TA -->|"counter + ticket, same transaction"| DB
 ```
 
 The Triage and Registration modules do not exist yet. The page `/tickets` plays their role: it sends the patient data and the triage level. The API stores the patient and then calls the ticket assigner of the domain.
@@ -73,8 +74,8 @@ Answers `200` with the waiting tickets, most urgent level first and, within a le
 
 ## 3. Current limits
 
-- **Tickets, queues and daily counters live in memory** (domain objects created once in `TurnConfig`). They are lost when the application restarts; only the patient is stored in the database. Persisting them in the `ticket` and `ticket_counter` tables is pending.
-- Because that state is in memory, requests are processed one at a time (`synchronized` service) and the application must run as a single instance.
+- Tickets, queues, daily counters and wait limits are stored in the database ([ADR-0007](../decisiones/ADR-0007-persistence-layer.md)); a restart loses nothing. One transaction covers the patient, the counter and the ticket. Concurrent requests are serialised by the database (the counter row lock), so several instances can run.
+- The wait limits are read from `wait_limit` but no API edits them yet (REQ-10), and the order in which patients are called (REQ-11) is not implemented.
 
 ## 4. Where each part lives
 
@@ -85,7 +86,8 @@ Answers `200` with the waiting tickets, most urgent level first and, within a le
 | Orchestration (store patient, then assign) | `turn/application/TicketAssignmentService` |
 | Wiring of the domain objects, hospital clock | `turn/application/TurnConfig` |
 | Table `patient` | `turn/persistence/JdbcPatientRepository` |
-| Ticket assigner (business rules) | `turn/domain/TicketAssigner`, `queue/domain/PriorityQueueManager`, `queue/domain/LevelQueue` |
+| Tables `ticket`, `ticket_counter`, `wait_limit` | `queue/persistence/JdbcTicketRepository`, `turn/persistence/JdbcTicketCounterRepository`, `wait/persistence/JdbcWaitLimitRepository` (ports: `TicketRepository`, `TicketCounterRepository`, `WaitLimitRepository`) |
+| Ticket assigner (business rules, no state) | `turn/domain/TicketAssigner`, `queue/domain/PriorityQueueManager`, `wait/domain/WaitTimeManager` |
 
 Back-end paths are relative to `src/backend/src/main/java/com/adres/urgencias/`.
 
