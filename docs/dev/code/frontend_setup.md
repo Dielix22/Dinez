@@ -28,7 +28,7 @@ node -v   # v22.12.0 or higher
 npm -v
 ```
 
-No database, back end or environment variable is needed to run the front end for now.
+The page `/tickets` calls the back end. Start it first on port 8080 (see [Back-end Setup](backend_setup.md)): in development, Vite forwards every request that starts with `/api` to `http://localhost:8080` (`server.proxy` in `vite.config.ts`), so the code always calls relative URLs such as `/api/tickets`. In production there is no proxy: the back end serves the front end, so both share one origin. Restart `npm run dev` after changing `vite.config.ts`. The tests need neither back end nor database.
 
 ---
 
@@ -74,7 +74,8 @@ src/frontend/
 ├── src/
 │   ├── main.tsx            # mounts <App /> in the page
 │   ├── App.tsx             # router: maps URLs to pages
-│   ├── pages/              # one component per screen (HelloWorldPage.tsx)
+│   ├── pages/              # one component per screen (HelloWorldPage.tsx, TicketAssignmentPage.tsx)
+│   ├── api/                # calls to the back end (tickets.ts)
 │   └── i18n/messages.ts    # all user-facing text (Spanish)
 └── tests/                  # tests, mirroring src/ (HelloWorldPage.test.tsx)
 ```
