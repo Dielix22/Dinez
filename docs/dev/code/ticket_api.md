@@ -60,12 +60,14 @@ curl -i -X POST http://localhost:8080/api/tickets \
 
 ## 2. List the waiting queue — `GET /api/tickets`
 
-Answers `200` with the waiting tickets, most urgent level first and, within a level, in order of arrival:
+Answers `200` with the waiting tickets, most urgent level first and, within a level, in order of arrival. This is the order of the queue by level (BR-TRG-02), **not** the order in which patients will be called: the exception of REQ-11 (a ticket that exceeded its wait limit goes first) is not applied here.
+
+`ticketDate` is part of the identity of a ticket: the number restarts every day, but a patient who is still waiting after midnight keeps the ticket of the previous day, so two waiting tickets can have the same `ticketNumber` and different `ticketDate`.
 
 ```json
 [
-  {"ticketNumber": "T2-001", "patientId": "P-1005", "level": 2, "position": 1, "arrivalTime": "2026-11-12T15:10:00Z"},
-  {"ticketNumber": "T3-014", "patientId": "P-0999", "level": 3, "position": 1, "arrivalTime": "2026-11-12T14:30:00Z"}
+  {"ticketDate": "2026-11-12", "ticketNumber": "T2-001", "patientId": "P-1005", "level": 2, "position": 1, "arrivalTime": "2026-11-12T15:10:00Z"},
+  {"ticketDate": "2026-11-12", "ticketNumber": "T3-014", "patientId": "P-0999", "level": 3, "position": 1, "arrivalTime": "2026-11-12T14:30:00Z"}
 ]
 ```
 

@@ -150,6 +150,22 @@ class TicketAssignmentServiceTest {
         assertEquals(List.of("T2-001", "T3-001", "T3-002", "T4-001"), numbers);
     }
 
+    // The number restarts every day: the date tells apart two tickets with the same number.
+    @Test
+    void listedTicketsCarryTheirTicketDate() {
+        assign("P-1", 3);
+
+        assertEquals(
+                java.time.LocalDate.of(2026, 11, 12), service.listWaitingTickets().get(0).ticketDate());
+    }
+
+    @Test
+    void tooLongValuesAreRejectedBeforeAnythingIsStored() {
+        assertThrows(InvalidDataException.class, () -> assign("x".repeat(51), 3));
+
+        assertTrue(patients.isEmpty());
+    }
+
     /** Fake storage: no database. */
     private static final class InMemoryPatientRepository implements PatientRepository {
 

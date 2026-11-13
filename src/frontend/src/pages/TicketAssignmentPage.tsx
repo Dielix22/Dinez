@@ -36,8 +36,9 @@ interface Feedback {
   text: string;
 }
 
-function formatTime(instant: string): string {
-  return new Date(instant).toLocaleTimeString(LOCALE, { hour12: false });
+// Date and time: after midnight the queue can still hold tickets of the previous day.
+function formatArrival(instant: string): string {
+  return new Date(instant).toLocaleString(LOCALE, { hour12: false });
 }
 
 function toFeedback(assignment: TicketAssignment): Feedback {
@@ -218,12 +219,12 @@ export default function TicketAssignmentPage() {
               </TableHead>
               <TableBody>
                 {queue.map((ticket) => (
-                  <TableRow key={ticket.ticketNumber}>
+                  <TableRow key={`${ticket.ticketDate}-${ticket.ticketNumber}`}>
                     <TableCell>{ticket.ticketNumber}</TableCell>
                     <TableCell>{ticket.level}</TableCell>
                     <TableCell>{ticket.position}</TableCell>
                     <TableCell>{ticket.patientId}</TableCell>
-                    <TableCell>{formatTime(ticket.arrivalTime)}</TableCell>
+                    <TableCell>{formatArrival(ticket.arrivalTime)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

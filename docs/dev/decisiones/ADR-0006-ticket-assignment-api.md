@@ -13,7 +13,7 @@ Proposed
 
 ## Context
 
-The first vertical slice implements REQ-04 (assign a ticket from the triage result). The work is split in two: the domain of the ticket assigner (`TicketAssigner`, `PriorityQueueManager`, `LevelQueue`; pull request #36) and, in this change, the front end and the API that call it. The modules that would call the assigner in the design (Triage, Registration) do not exist yet, and the design defines `asignarTurno(idPaciente, nivel)` between internal modules but not its HTTP form. **The design documents were not modified.**
+The first vertical slice implements REQ-04 (assign a ticket from the triage result). This change contains the whole slice: the domain of the ticket assigner (`TicketAssigner`, `PriorityQueueManager`, `LevelQueue`), the API that calls it and the front end screen. The modules that would call the assigner in the design (Triage, Registration) do not exist yet, and the design defines `asignarTurno(idPaciente, nivel)` between internal modules but not its HTTP form. **The design documents were not modified.**
 
 ## Decision
 

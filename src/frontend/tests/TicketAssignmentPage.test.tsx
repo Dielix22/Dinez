@@ -13,6 +13,7 @@ import TicketAssignmentPage from "../src/pages/TicketAssignmentPage";
 const TEXT = MESSAGES.tickets;
 
 const WAITING_TICKET: WaitingTicket = {
+  ticketDate: "2026-11-12",
   ticketNumber: "T3-014",
   patientId: "P-0999",
   level: 3,
@@ -21,6 +22,7 @@ const WAITING_TICKET: WaitingTicket = {
 };
 
 const NEW_TICKET: WaitingTicket = {
+  ticketDate: "2026-11-12",
   ticketNumber: "T3-015",
   patientId: "P-1001",
   level: 3,

@@ -2,7 +2,6 @@ package com.adres.urgencias.presentation;
 
 import com.adres.urgencias.shared.domain.DuplicatePatientException;
 import com.adres.urgencias.shared.domain.InvalidDataException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -36,12 +35,5 @@ public class ApiExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleUnreadableBody(HttpMessageNotReadableException e) {
         return new ErrorResponse(INVALID_DATA, "Missing or malformed request body");
-    }
-
-    /** The database rejected a value, for example a text longer than its column. */
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleRejectedByDatabase(DataIntegrityViolationException e) {
-        return new ErrorResponse(INVALID_DATA, "A value is too long or not accepted");
     }
 }

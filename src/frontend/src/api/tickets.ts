@@ -23,6 +23,8 @@ export interface TicketAssignment {
 
 /** A waiting ticket, as listed by GET /api/tickets. */
 export interface WaitingTicket {
+  /** Day of the ticket (YYYY-MM-DD). The number restarts every day, so number + date identify it. */
+  ticketDate: string;
   ticketNumber: string;
   patientId: string;
   level: number;

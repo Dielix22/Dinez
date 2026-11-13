@@ -9,6 +9,11 @@ import java.time.LocalDateTime;
  */
 public class Patient {
 
+    /** Same limits as the columns of table {@code patient} (migration V1). */
+    public static final int MAX_ID_LENGTH = 50;
+    public static final int MAX_DOCUMENT_LENGTH = 50;
+    public static final int MAX_NAME_LENGTH = 100;
+
     private final String patientId;
     private final String document;
     private final String firstName;
@@ -34,6 +39,12 @@ public class Patient {
         }
         if (lastName == null || lastName.isBlank()) {
             throw new InvalidDataException("Last name must not be blank");
+        }
+        if (patientId.length() > MAX_ID_LENGTH
+                || document.length() > MAX_DOCUMENT_LENGTH
+                || firstName.length() > MAX_NAME_LENGTH
+                || lastName.length() > MAX_NAME_LENGTH) {
+            throw new InvalidDataException("A value is longer than the allowed length");
         }
         if (triageLevel == null) {
             throw new InvalidDataException("Triage level must not be null");

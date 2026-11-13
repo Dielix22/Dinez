@@ -57,9 +57,9 @@ public class PriorityQueueManager {
 
     public List<Ticket> getOrderedList() {
         List<Ticket> ordered = new ArrayList<>();
-        for (TriageLevel level : List.of(
-                TriageLevel.LEVEL_2, TriageLevel.LEVEL_3, TriageLevel.LEVEL_4, TriageLevel.LEVEL_5)) {
-            ordered.addAll(queues.get(level).listAll());
+        // The EnumMap iterates in enum order: most urgent level (2) first.
+        for (LevelQueue queue : queues.values()) {
+            ordered.addAll(queue.listAll());
         }
         return List.copyOf(ordered);
     }

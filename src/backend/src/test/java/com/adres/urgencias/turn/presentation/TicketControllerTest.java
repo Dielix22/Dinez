@@ -13,6 +13,7 @@ import com.adres.urgencias.turn.application.TicketAssignmentResult;
 import com.adres.urgencias.turn.application.TicketAssignmentService;
 import com.adres.urgencias.turn.application.WaitingTicket;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,7 @@ class TicketControllerTest {
              "lastName": "Castaño", "level": 3}
             """;
     private static final WaitingTicket TICKET =
-            new WaitingTicket("T3-015", "P-1001", 3, 3, Instant.parse("2026-11-12T15:00:00Z"));
+            new WaitingTicket(LocalDate.of(2026, 11, 12), "T3-015", "P-1001", 3, 3, Instant.parse("2026-11-12T15:00:00Z"));
 
     @Autowired private MockMvc mockMvc;
 
@@ -100,6 +101,7 @@ class TicketControllerTest {
 
         mockMvc.perform(get("/api/tickets"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].ticketDate").value("2026-11-12"))
                 .andExpect(jsonPath("$[0].ticketNumber").value("T3-015"))
                 .andExpect(jsonPath("$[0].level").value(3))
                 .andExpect(jsonPath("$[0].position").value(3));
