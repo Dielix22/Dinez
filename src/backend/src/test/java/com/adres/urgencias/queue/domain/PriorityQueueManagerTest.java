@@ -9,12 +9,12 @@ import com.adres.urgencias.shared.domain.DuplicatePatientException;
 import com.adres.urgencias.shared.domain.InvalidDataException;
 import com.adres.urgencias.shared.domain.Ticket;
 import com.adres.urgencias.shared.domain.TriageLevel;
+import com.adres.urgencias.testsupport.InMemoryTicketRepository;
+import com.adres.urgencias.testsupport.InMemoryWaitLimitRepository;
 import com.adres.urgencias.wait.domain.WaitTimeManager;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -27,25 +27,22 @@ class PriorityQueueManagerTest {
 
     @BeforeEach
     void setUp() {
-        WaitTimeManager waitTimeManager = new WaitTimeManager(Map.of(
-                TriageLevel.LEVEL_2, Duration.ofMinutes(30),
-                TriageLevel.LEVEL_3, Duration.ofMinutes(60),
-                TriageLevel.LEVEL_4, Duration.ofMinutes(120),
-                TriageLevel.LEVEL_5, Duration.ofMinutes(240)));
-        queueManager = new PriorityQueueManager(waitTimeManager);
+        queueManager =
+                new PriorityQueueManager(
+                        new InMemoryTicketRepository(),
+                        new WaitTimeManager(new InMemoryWaitLimitRepository()));
     }
 
+    private static Ticket ticket(String number, String patientId, int minute, TriageLevel level) {
+        return new Ticket(null, DATE, number, patientId, BASE_TIME.plusMinutes(minute), level, 1, null);
+    }
+
+    // REQ-04, BR-TRG-02
     @Test
     void shouldAssignSequentialPositionsPerLevelAndOrderByUrgencyAndArrival() {
-        Ticket level4First = new Ticket(null, DATE, "T4-001", "PAT-4A", BASE_TIME, TriageLevel.LEVEL_4, 1, null);
-        Ticket level2First =
-                new Ticket(null, DATE, "T2-001", "PAT-2A", BASE_TIME.plusMinutes(1), TriageLevel.LEVEL_2, 1, null);
-        Ticket level2Second =
-                new Ticket(null, DATE, "T2-002", "PAT-2B", BASE_TIME.plusMinutes(2), TriageLevel.LEVEL_2, 1, null);
-
-        queueManager.addPatient(level4First);
-        queueManager.addPatient(level2First);
-        queueManager.addPatient(level2Second);
+        Ticket level4First = queueManager.addPatient(ticket("T4-001", "PAT-4A", 0, TriageLevel.LEVEL_4));
+        Ticket level2First = queueManager.addPatient(ticket("T2-001", "PAT-2A", 1, TriageLevel.LEVEL_2));
+        Ticket level2Second = queueManager.addPatient(ticket("T2-002", "PAT-2B", 2, TriageLevel.LEVEL_2));
 
         assertEquals(1, level4First.getPosition());
         assertEquals(1, level2First.getPosition());
@@ -57,13 +54,11 @@ class PriorityQueueManagerTest {
         assertEquals(List.of(level2First, level2Second, level4First), ordered);
     }
 
+    // REQ-04 scenario 4
     @Test
     void shouldRejectDuplicatePatientInSameOrDifferentLevel() {
-        Ticket first = new Ticket(null, DATE, "T3-001", "PAT-100", BASE_TIME, TriageLevel.LEVEL_3, 1, null);
-        Ticket duplicateDifferentLevel =
-                new Ticket(null, DATE, "T2-001", "PAT-100", BASE_TIME.plusMinutes(5), TriageLevel.LEVEL_2, 1, null);
-
-        queueManager.addPatient(first);
+        queueManager.addPatient(ticket("T3-001", "PAT-100", 0, TriageLevel.LEVEL_3));
+        Ticket duplicateDifferentLevel = ticket("T2-001", "PAT-100", 5, TriageLevel.LEVEL_2);
 
         DuplicatePatientException exception =
                 assertThrows(DuplicatePatientException.class, () -> queueManager.addPatient(duplicateDifferentLevel));
@@ -71,8 +66,8 @@ class PriorityQueueManagerTest {
     }
 
     @Test
-    void shouldRejectNullTicketOrInvalidQueueLevel() {
+    void shouldRejectNullTicketAndLevelOneTicket() {
         assertThrows(InvalidDataException.class, () -> queueManager.addPatient(null));
-        assertThrows(InvalidDataException.class, () -> new LevelQueue(TriageLevel.LEVEL_1));
+        assertThrows(InvalidDataException.class, () -> ticket("T1-001", "PAT-1", 0, TriageLevel.LEVEL_1));
     }
 }

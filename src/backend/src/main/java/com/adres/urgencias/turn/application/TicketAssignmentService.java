@@ -18,8 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
  * it stores the patient and then calls {@link TicketAssigner#assignTicket} (REQ-04).
  *
  * <p>The ticket rules themselves (number, queue, duplicate) are in the domain classes; this class
- * only orchestrates. Its methods are {@code synchronized} because the domain keeps the queues and
- * the daily counters in memory and is not thread-safe.
+ * only orchestrates. Queues and counters are in the database, so one transaction covers the
+ * patient, the counter and the ticket.
  */
 @Service
 public class TicketAssignmentService {
@@ -43,14 +43,14 @@ public class TicketAssignmentService {
     /**
      * Stores the patient and assigns a ticket. Level 1 gets no ticket (BR-TRG-03).
      *
-     * <p>The patient is stored in a transaction: if the assigner rejects the request, the insert
-     * is rolled back and nothing is written.
+     * <p>Everything runs in one transaction: if the assigner rejects the request, the patient
+     * insert and the counter increment are rolled back and nothing is written.
      *
      * @throws InvalidDataException if a value is missing or the level is not between 1 and 5
      * @throws DuplicatePatientException if the patient already has a waiting ticket
      */
     @Transactional
-    public synchronized TicketAssignmentResult assignTicket(
+    public TicketAssignmentResult assignTicket(
             String patientId, String document, String firstName, String lastName, Integer level) {
         TriageLevel triageLevel = toTriageLevel(level);
         Patient patient =
@@ -80,7 +80,8 @@ public class TicketAssignmentService {
     }
 
     /** Lists the waiting tickets: most urgent level first, then order of arrival. */
-    public synchronized List<WaitingTicket> listWaitingTickets() {
+    @Transactional(readOnly = true)
+    public List<WaitingTicket> listWaitingTickets() {
         return priorityQueueManager.getOrderedList().stream().map(this::toWaitingTicket).toList();
     }
 

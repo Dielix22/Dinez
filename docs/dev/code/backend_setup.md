@@ -2,7 +2,8 @@
 
 ## Requisitos
 - **Java**: Versión 25 instalada.
-- **Base de datos**: PostgreSQL (opcional para ejecutar las pruebas gracias al uso de H2 en memoria).
+- **Base de datos**: PostgreSQL para ejecutar la aplicación (ver `database_migrations.md`).
+- **Docker** (opcional): las pruebas que cargan la aplicación usan un contenedor PostgreSQL (Testcontainers, ADR-0007). Sin Docker esas pruebas se omiten; las pruebas unitarias del dominio se ejecutan igual.
 
 ## Variables de entorno (.env)
 Debes crear un archivo `.env` directamente dentro de la carpeta **`src/backend/`** (al mismo nivel que el archivo `pom.xml`).

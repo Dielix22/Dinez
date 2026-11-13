@@ -10,11 +10,13 @@ import com.adres.urgencias.queue.domain.PriorityQueueManager;
 import com.adres.urgencias.shared.domain.DuplicatePatientException;
 import com.adres.urgencias.shared.domain.InvalidDataException;
 import com.adres.urgencias.shared.domain.TriageLevel;
+import com.adres.urgencias.testsupport.InMemoryTicketCounterRepository;
+import com.adres.urgencias.testsupport.InMemoryTicketRepository;
+import com.adres.urgencias.testsupport.InMemoryWaitLimitRepository;
 import com.adres.urgencias.turn.domain.Patient;
 import com.adres.urgencias.turn.domain.TicketAssigner;
 import com.adres.urgencias.wait.domain.WaitTimeManager;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.HashMap;
@@ -39,15 +41,13 @@ class TicketAssignmentServiceTest {
     @BeforeEach
     void setUp() {
         Clock clock = Clock.fixed(NOW, HOSPITAL_ZONE);
-        WaitTimeManager waitTimeManager =
-                new WaitTimeManager(
-                        Map.of(
-                                TriageLevel.LEVEL_2, Duration.ofMinutes(30),
-                                TriageLevel.LEVEL_3, Duration.ofMinutes(60),
-                                TriageLevel.LEVEL_4, Duration.ofMinutes(120),
-                                TriageLevel.LEVEL_5, Duration.ofMinutes(240)));
-        PriorityQueueManager priorityQueueManager = new PriorityQueueManager(waitTimeManager);
-        TicketAssigner ticketAssigner = new TicketAssigner(priorityQueueManager, clock);
+        PriorityQueueManager priorityQueueManager =
+                new PriorityQueueManager(
+                        new InMemoryTicketRepository(),
+                        new WaitTimeManager(new InMemoryWaitLimitRepository()));
+        TicketAssigner ticketAssigner =
+                new TicketAssigner(
+                        priorityQueueManager, new InMemoryTicketCounterRepository(), clock);
         patients = new InMemoryPatientRepository();
         service =
                 new TicketAssignmentService(patients, ticketAssigner, priorityQueueManager, clock);
