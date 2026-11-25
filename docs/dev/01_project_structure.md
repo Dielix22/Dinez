@@ -5,7 +5,7 @@
 | **Project** | Adres en Urgencias (repository `Dinez`) |
 | **Status** | Draft — proposal for team review |
 | **Scope** | Repository layout, code organisation, test layout, documentation placement |
-| **Related** | [02 Collaboration Workflow](02_collaboration_workflow.md) · [03 Coding Conventions](03_coding_conventions.md) |
+| **Related** | [02 Collaboration Workflow](02_collaboration_workflow.md) · [03 Coding Conventions](03_coding_conventions.md) · [04 Project Responsibilities](04_project_responsibilities.md) |
 
 ---
 
