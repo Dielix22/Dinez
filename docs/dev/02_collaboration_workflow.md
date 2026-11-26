@@ -5,7 +5,7 @@
 | **Project** | Adres en Urgencias (repository `Dinez`) |
 | **Status** | Draft — proposal for team review |
 | **Scope** | Branching model, commits, pull requests, code review, CI, work tracking |
-| **Related** | [01 Project Structure](01_project_structure.md) · [03 Coding Conventions](03_coding_conventions.md) |
+| **Related** | [01 Project Structure](01_project_structure.md) · [03 Coding Conventions](03_coding_conventions.md) · [04 Project Responsibilities](04_project_responsibilities.md) |
 
 ---
 
@@ -100,7 +100,7 @@ Secrets, credentials, personal data (the product handles *simulated* patient dat
 
 ### 4.3 Merge requirements (enforced by branch protection on `main`)
 
-- [ ] At least **1 approving review** from a member other than the author.
+- [ ] At least **1 approving review** from a member other than the author (**2** when the fallback rule of [04 Project Responsibilities §3.1](04_project_responsibilities.md) or the architecture rule of §5.2 applies).
 - [ ] CI is green (build, tests, formatting, architecture rules, coverage gate).
 - [ ] Branch is up to date with `main`.
 - [ ] All review conversations resolved.
@@ -128,10 +128,11 @@ Who merges: **the author**, once the requirements above are met. Reviewers appro
 
 | Rule | Detail |
 |---|---|
-| Reviewer | One member other than the author, chosen **round-robin** so that knowledge circulates; the author requests the review explicitly. |
-| Cross-component changes | Add a second reviewer who owns the other component. |
+| Reviewer | The reviewer assigned to the part being changed in [04 Project Responsibilities §3](04_project_responsibilities.md); the author requests the review explicitly. For changes that touch none of the five parts (e.g. documentation), one member other than the author, chosen **round-robin** so that knowledge circulates. |
+| Cross-component changes | The assigned reviewer of **each** part touched reviews the PR (one approval per part). |
+| Owner not involved | Follow the fallback rule in [04 Project Responsibilities §3.1](04_project_responsibilities.md): two reviewers. |
 | Architecture-affecting changes (new dependency arrow, new component, ADR) | **Two approvals**, including one from a member who did not take part in writing it. |
-| Avoid | The same pair always reviewing each other. |
+| Avoid | The same pair always reviewing each other (for changes outside the five parts). |
 
 ### 5.3 Service levels
 

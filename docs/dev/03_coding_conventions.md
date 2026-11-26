@@ -5,7 +5,7 @@
 | **Project** | Adres en Urgencias (repository `Dinez`) |
 | **Status** | Draft — proposal for team review |
 | **Scope** | Language, naming, code style, error handling, testing, documentation in code |
-| **Related** | [01 Project Structure](01_project_structure.md) · [02 Collaboration Workflow](02_collaboration_workflow.md) |
+| **Related** | [01 Project Structure](01_project_structure.md) · [02 Collaboration Workflow](02_collaboration_workflow.md) · [04 Project Responsibilities](04_project_responsibilities.md) |
 
 > These conventions follow [ADR-0001](decisiones/ADR-0001-stack-tecnologico.md): **Java** for the back end and **React** for the front end. Tools (formatter, linter, test framework, build tool) are not fixed here; they will be chosen when the projects are initialised.
 
