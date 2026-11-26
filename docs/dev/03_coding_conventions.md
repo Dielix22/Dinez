@@ -44,7 +44,7 @@ Use one word per concept: *patient*, not sometimes *user* or *client*.
 
 | Element | Convention | Example |
 |---|---|---|
-| Package | lower case, no underscores | `queue.domain` |
+| Package | lower case, no underscores; layer then module ([01 §2.1](01_project_structure.md#21-back-end-structure)) | `service.turn` |
 | Class / record / enum / interface | `PascalCase`, nouns | `LevelQueue`, `TriageLevel` |
 | Method | `camelCase`, verbs; boolean queries read as questions | `assignTicket`, `hasExceededLimit`, `patientExists` |
 | Field / variable / parameter | `camelCase`, meaningful | `waitLimit`, `arrivalTime` |
@@ -54,7 +54,7 @@ Use one word per concept: *patient*, not sometimes *user* or *client*.
 
 - No obscure abbreviations (`id`, `url` are fine; `gcp` is not a name).
 - No type information in names (`ticketList`): `tickets` is enough.
-- Domain classes use domain verbs (`assignTicket`, `removePatient`, `changeLimit`), not CRUD verbs (`save`, `delete`, `update`), which belong to repositories.
+- Classes in `service/` and `model/` use domain verbs (`assignTicket`, `removePatient`, `changeLimit`), not CRUD verbs (`save`, `delete`, `update`), which belong to repositories.
 - Booleans are positive (`isEmpty`, not `isNotEmpty`).
 
 ### 4.2 Database
@@ -86,11 +86,13 @@ Domain terms keep the same English names as the back end (a `Ticket` is a `Ticke
 
 These are triggers for a conversation in review, not mechanical limits. `PriorityQueueManager` is flagged in the design as the class most likely to grow.
 
-### 5.2 Domain layer rules
+### 5.2 Service and model rules
 
-1. **No framework imports** in the domain (web, persistence, serialisation): business rules must be testable on their own.
-2. **No hidden dependencies.** No `LocalDateTime.now()`, `Math.random()` or similar direct calls in domain code; receive the clock (or other source) through the constructor. REQ-11 depends on elapsed time and its tests must be deterministic.
-3. **Valid by construction.** Constructors validate invariants and throw a domain exception; an invalid `Ticket` cannot exist.
+These rules apply to the business code in `service/` and `model/`.
+
+1. **No web, persistence or serialisation framework imports.** `model/` has no framework imports at all; `service/` may only use the framework's service and transaction annotations. A service reaches the database only through repository interfaces, never through a `Jdbc...` class. Business rules must be testable on their own.
+2. **No hidden dependencies.** No `LocalDateTime.now()`, `Math.random()` or similar direct calls in this code; receive the clock (or other source) through the constructor. REQ-11 depends on elapsed time and its tests must be deterministic.
+3. **Valid by construction.** Constructors of models validate invariants and throw a domain exception; an invalid `Ticket` cannot exist.
 4. **Encapsulation.** Fields are `private`; expose behaviour (`ticket.hasExceededLimit(...)`), not state.
 5. **Business rules are named methods**, not inline conditions: `if (ticket.hasExceededLimit(limit, now))`, not `if (now - t.h > l)`.
 6. **Never return `null` from public methods;** use `Optional` for "may be absent" (`nextPatient()` → `Optional<Ticket>`).
@@ -108,9 +110,9 @@ These are triggers for a conversation in review, not mechanical limits. `Priorit
 
 | Situation | Mechanism |
 |---|---|
-| Violated business rule or invalid input in the domain | Unchecked domain exceptions with a precise name: `DuplicatePatientException`, `InvalidDataException` |
+| Violated business rule or invalid input in a service or model | Unchecked domain exceptions with a precise name: `DuplicatePatientException`, `InvalidDataException` |
 | Expected "nothing there" | `Optional` / empty result (e.g. no patient waiting), not an exception |
-| Web layer | One central handler maps domain exceptions to a single error response format (HTTP status + stable error code + message) |
+| Presentation layer | One central handler maps domain exceptions to a single error response format (HTTP status + stable error code + message) |
 
 The error **code** is stable; the front end maps it to the Spanish text shown to users.
 
@@ -130,15 +132,15 @@ The error **code** is stable; the front end maps it to the Spanish text shown to
 ## 7. Database
 
 - Schema changes only through new, numbered migration scripts; never alter a merged one.
-- Declare constraints in the schema (`NOT NULL`, `UNIQUE`, foreign keys) in addition to validating in the domain; the domain is the source of truth.
+- Declare constraints in the schema (`NOT NULL`, `UNIQUE`, foreign keys) in addition to validating in the application code; the rules in `service/` and `model/` are the source of truth.
 - Parameterised queries only, never string concatenation with user input.
-- No business logic in triggers or stored procedures: rules live in the domain so they can be tested without a database (`project.md` §8).
+- No business logic in triggers or stored procedures: rules live in `service/` and `model/` so they can be tested without a database (`project.md` §8).
 
 ---
 
 ## 8. Documentation Conventions
 
-- Comments explain **why**, not what. Public domain classes and methods carry Javadoc stating the rule or responsibility and the requirement ID.
+- Comments explain **why**, not what. Public classes and methods of `service/` and `model/` carry Javadoc stating the rule or responsibility and the requirement ID.
 - `docs/dev` is written in English; business documents keep their versioning convention and may contain Spanish terms.
 - Diagrams in **Mermaid**, updated in the same PR as the code they describe.
 - A decision that changes the architecture or the stack needs an ADR **before** the code (templates in `docs/templates/`).
