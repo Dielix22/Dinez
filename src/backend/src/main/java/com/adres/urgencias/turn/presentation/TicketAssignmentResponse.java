@@ -1,6 +1,6 @@
 package com.adres.urgencias.turn.presentation;
 
-import com.adres.urgencias.turn.application.TicketAssignmentResult;
+import com.adres.urgencias.service.turn.TicketAssignmentResult;
 import com.adres.urgencias.turn.application.WaitingTicket;
 import java.time.Instant;
 

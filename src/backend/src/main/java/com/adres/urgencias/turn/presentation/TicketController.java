@@ -1,7 +1,7 @@
 package com.adres.urgencias.turn.presentation;
 
-import com.adres.urgencias.turn.application.TicketAssignmentResult;
-import com.adres.urgencias.turn.application.TicketAssignmentService;
+import com.adres.urgencias.service.turn.TicketAssignmentResult;
+import com.adres.urgencias.service.turn.TicketAssignmentService;
 import com.adres.urgencias.turn.application.WaitingTicket;
 import java.util.List;
 import org.springframework.http.HttpStatus;

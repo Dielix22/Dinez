@@ -1,7 +1,9 @@
-package com.adres.urgencias.wait.domain;
+package com.adres.urgencias.service.wait;
 
 import com.adres.urgencias.shared.domain.InvalidDataException;
 import com.adres.urgencias.shared.domain.TriageLevel;
+import com.adres.urgencias.wait.domain.WaitLimitRepository;
+
 import java.time.Duration;
 
 /**
