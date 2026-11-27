@@ -1,9 +1,10 @@
-package com.adres.urgencias.queue.domain;
+package com.adres.urgencias.service.queue;
 
+import com.adres.urgencias.queue.domain.TicketRepository;
 import com.adres.urgencias.shared.domain.DuplicatePatientException;
 import com.adres.urgencias.shared.domain.InvalidDataException;
 import com.adres.urgencias.shared.domain.Ticket;
-import com.adres.urgencias.wait.domain.WaitTimeManager;
+import com.adres.urgencias.service.wait.WaitTimeManager;
 import java.util.List;
 
 /**

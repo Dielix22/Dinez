@@ -1,11 +1,11 @@
-package com.adres.urgencias.turn.application;
+package com.adres.urgencias.config;
 
-import com.adres.urgencias.queue.domain.PriorityQueueManager;
+import com.adres.urgencias.service.queue.PriorityQueueManager;
 import com.adres.urgencias.queue.domain.TicketRepository;
-import com.adres.urgencias.turn.domain.TicketAssigner;
+import com.adres.urgencias.service.turn.TicketAssigner;
 import com.adres.urgencias.turn.domain.TicketCounterRepository;
 import com.adres.urgencias.wait.domain.WaitLimitRepository;
-import com.adres.urgencias.wait.domain.WaitTimeManager;
+import com.adres.urgencias.service.wait.WaitTimeManager;
 import java.time.Clock;
 import java.time.ZoneId;
 import org.springframework.beans.factory.annotation.Value;

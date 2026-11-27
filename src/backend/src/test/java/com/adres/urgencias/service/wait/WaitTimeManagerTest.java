@@ -1,4 +1,4 @@
-package com.adres.urgencias.wait.domain;
+package com.adres.urgencias.service.wait;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

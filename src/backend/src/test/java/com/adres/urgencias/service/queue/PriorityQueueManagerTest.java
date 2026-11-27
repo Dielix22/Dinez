@@ -1,4 +1,4 @@
-package com.adres.urgencias.queue.domain;
+package com.adres.urgencias.service.queue;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -11,7 +11,7 @@ import com.adres.urgencias.shared.domain.Ticket;
 import com.adres.urgencias.shared.domain.TriageLevel;
 import com.adres.urgencias.testsupport.InMemoryTicketRepository;
 import com.adres.urgencias.testsupport.InMemoryWaitLimitRepository;
-import com.adres.urgencias.wait.domain.WaitTimeManager;
+import com.adres.urgencias.service.wait.WaitTimeManager;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;

@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.adres.urgencias.shared.domain.DuplicatePatientException;
 import com.adres.urgencias.shared.domain.TriageLevel;
-import com.adres.urgencias.turn.application.TicketAssignmentResult;
-import com.adres.urgencias.turn.application.TicketAssignmentService;
+import com.adres.urgencias.service.turn.TicketAssignmentResult;
+import com.adres.urgencias.service.turn.TicketAssignmentService;
 import com.adres.urgencias.turn.application.WaitingTicket;
 import com.adres.urgencias.turn.domain.TicketCounterRepository;
 import com.adres.urgencias.wait.domain.WaitLimitRepository;

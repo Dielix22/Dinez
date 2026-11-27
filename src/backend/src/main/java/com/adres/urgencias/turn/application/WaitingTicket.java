@@ -19,7 +19,7 @@ public record WaitingTicket(
         int position,
         Instant arrivalTime) {
 
-    static WaitingTicket from(Ticket ticket, ZoneId hospitalZone) {
+    public static WaitingTicket from(Ticket ticket, ZoneId hospitalZone) {
         return new WaitingTicket(
                 ticket.getTicketDate(),
                 ticket.getTicketNumber(),

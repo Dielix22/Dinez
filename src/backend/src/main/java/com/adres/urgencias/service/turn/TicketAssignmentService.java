@@ -1,12 +1,14 @@
-package com.adres.urgencias.turn.application;
+package com.adres.urgencias.service.turn;
 
-import com.adres.urgencias.queue.domain.PriorityQueueManager;
+import com.adres.urgencias.service.queue.PriorityQueueManager;
 import com.adres.urgencias.shared.domain.DuplicatePatientException;
 import com.adres.urgencias.shared.domain.InvalidDataException;
 import com.adres.urgencias.shared.domain.Ticket;
 import com.adres.urgencias.shared.domain.TriageLevel;
+import com.adres.urgencias.turn.application.PatientRepository;
+import com.adres.urgencias.turn.application.WaitingTicket;
 import com.adres.urgencias.turn.domain.Patient;
-import com.adres.urgencias.turn.domain.TicketAssigner;
+
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;

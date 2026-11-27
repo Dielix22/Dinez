@@ -1,4 +1,4 @@
-package com.adres.urgencias.turn.application;
+package com.adres.urgencias.service.turn;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -6,16 +6,17 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.adres.urgencias.queue.domain.PriorityQueueManager;
+import com.adres.urgencias.service.queue.PriorityQueueManager;
 import com.adres.urgencias.shared.domain.DuplicatePatientException;
 import com.adres.urgencias.shared.domain.InvalidDataException;
 import com.adres.urgencias.shared.domain.TriageLevel;
 import com.adres.urgencias.testsupport.InMemoryTicketCounterRepository;
 import com.adres.urgencias.testsupport.InMemoryTicketRepository;
 import com.adres.urgencias.testsupport.InMemoryWaitLimitRepository;
+import com.adres.urgencias.turn.application.PatientRepository;
+import com.adres.urgencias.turn.application.WaitingTicket;
 import com.adres.urgencias.turn.domain.Patient;
-import com.adres.urgencias.turn.domain.TicketAssigner;
-import com.adres.urgencias.wait.domain.WaitTimeManager;
+import com.adres.urgencias.service.wait.WaitTimeManager;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;

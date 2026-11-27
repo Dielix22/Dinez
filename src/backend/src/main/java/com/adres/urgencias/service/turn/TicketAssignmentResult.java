@@ -1,4 +1,6 @@
-package com.adres.urgencias.turn.application;
+package com.adres.urgencias.service.turn;
+
+import com.adres.urgencias.turn.application.WaitingTicket;
 
 /**
  * Outcome of processing a triage result: the patient waits with a ticket, or is level 1 and goes

@@ -9,8 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.adres.urgencias.shared.domain.DuplicatePatientException;
 import com.adres.urgencias.shared.domain.InvalidDataException;
-import com.adres.urgencias.turn.application.TicketAssignmentResult;
-import com.adres.urgencias.turn.application.TicketAssignmentService;
+import com.adres.urgencias.service.turn.TicketAssignmentResult;
+import com.adres.urgencias.service.turn.TicketAssignmentService;
 import com.adres.urgencias.turn.application.WaitingTicket;
 import java.time.Instant;
 import java.time.LocalDate;
